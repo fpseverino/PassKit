@@ -1,5 +1,5 @@
-import Vapor
 import FluentKit
+import Vapor
 
 extension OrdersServiceCustom: AsyncModelMiddleware {
     public func create(model: OD, on db: any Database, next: any AnyAsyncModelResponder) async throws {
@@ -11,7 +11,7 @@ extension OrdersServiceCustom: AsyncModelMiddleware {
         model._$order.id = try order.requireID()
         try await next.create(model, on: db)
     }
-    
+
     public func update(model: OD, on db: any Database, next: any AnyAsyncModelResponder) async throws {
         let order = try await model._$order.get(on: db)
         order.updatedAt = Date()
