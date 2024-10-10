@@ -42,7 +42,7 @@ final class EncryptedPassesDelegate: PassesDelegate {
 
         if try await passData.pass.$userPersonalization.get(on: db) == nil {
             return PersonalizationJSON(
-                requiredPersonalizationFields: [.name, .postalCode, .emailAddress, .phoneNumber,],
+                requiredPersonalizationFields: [.name, .postalCode, .emailAddress, .phoneNumber],
                 description: "Hello, World!"
             )
         } else {
