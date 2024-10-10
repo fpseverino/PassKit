@@ -28,7 +28,7 @@ final class EncryptedPassesDelegate: PassesDelegate {
         return data
     }
 
-    func encodePersonalization<P: PassModel>(for pass: P, db: any Database, encoder: JSONEncoder) async throws -> PersonalizationJSON? {
+    func encodePersonalization<P: PassModel>(for pass: P, db: any Database) async throws -> PersonalizationJSON? {
         guard
             let passData = try await PassData.query(on: db)
                 .filter(\.$pass.$id == pass.id!)

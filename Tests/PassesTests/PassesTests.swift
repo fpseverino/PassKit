@@ -562,8 +562,7 @@ final class PassesTests: XCTestCase {
         let passData = PassData(title: "Test Pass")
         try await passData.create(on: app.db)
         let pass = try await passData.$pass.get(on: app.db)
-        let data = try await delegate.encodePersonalization(
-            for: pass, db: app.db, encoder: JSONEncoder())
+        let data = try await delegate.encodePersonalization(for: pass, db: app.db)
         XCTAssertNil(data)
     }
 }

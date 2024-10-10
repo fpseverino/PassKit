@@ -30,6 +30,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     private unowned let app: Application
     private unowned let delegate: any PassesDelegate
     private let logger: Logger?
+    private let encoder = JSONEncoder()
 
     /// Initializes the service and registers all the routes required for PassKit to work.
     ///
@@ -89,7 +90,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
             apnsConfig,
             eventLoopGroupProvider: .shared(app.eventLoopGroup),
             responseDecoder: JSONDecoder(),
-            requestEncoder: JSONEncoder(),
+            requestEncoder: self.encoder,
             as: .init(string: "passes"),
             isDefault: false
         )
@@ -578,18 +579,17 @@ extension PassesServiceCustom {
         try FileManager.default.copyItem(at: templateDirectory, to: root)
         defer { _ = try? FileManager.default.removeItem(at: root) }
 
-        let encoder = JSONEncoder()
-        try await self.delegate.encode(pass: pass, db: db, encoder: encoder)
+        try await self.delegate.encode(pass: pass, db: db, encoder: self.encoder)
             .write(to: root.appendingPathComponent("pass.json"))
 
         // Pass Personalization
-        if let encodedPersonalization = try await self.delegate.encodePersonalization(for: pass, db: db, encoder: encoder) {
+        if let encodedPersonalization = try await self.delegate.encodePersonalization(for: pass, db: db) {
             try encoder.encode(encodedPersonalization).write(to: root.appendingPathComponent("personalization.json"))
             files.append(URL(fileURLWithPath: "personalization.json", relativeTo: root))
         }
 
         try self.generateSignatureFile(
-            for: Self.generateManifestFile(using: encoder, in: root),
+            for: Self.generateManifestFile(using: self.encoder, in: root),
             in: root
         )
 
