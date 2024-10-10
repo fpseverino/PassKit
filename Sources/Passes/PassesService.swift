@@ -31,10 +31,7 @@ import Vapor
 
 /// The main class that handles PassKit passes.
 public final class PassesService: Sendable {
-    private let service:
-        PassesServiceCustom<
-            Pass, UserPersonalization, PassesDevice, PassesRegistration, PassesErrorLog
-        >
+    private let service: PassesServiceCustom<Pass, UserPersonalization, PassesDevice, PassesRegistration, PassesErrorLog>
 
     /// Initializes the service and registers all the routes required for PassKit to work.
     ///
@@ -42,12 +39,22 @@ public final class PassesService: Sendable {
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``PassesDelegate`` to use for pass generation.
     ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
+    ///   - wwdrCertificate: The name of Apple's WWDR.pem certificate as contained in `signingFilesDirectory` path.
+    ///   - pemCertificate: The name of the PEM Certificate for signing passes as contained in `signingFilesDirectory` path.
+    ///   - pemPrivateKey: The name of the PEM Certificate's private key for signing passes as contained in `signingFilesDirectory` path.
+    ///   - pemPrivateKeyPassword: The password of the PEM private key file.
+    ///   - sslBinary: The location of the `openssl` command as a file path.
     ///   - pushRoutesMiddleware: The `Middleware` to use for push notification routes. If `nil`, push routes will not be registered.
     ///   - logger: The `Logger` to use.
     public init(
         app: Application,
         delegate: any PassesDelegate,
         signingFilesDirectory: String,
+        wwdrCertificate: String = "WWDR.pem",
+        pemCertificate: String = "certificate.pem",
+        pemPrivateKey: String = "key.pem",
+        pemPrivateKeyPassword: String? = nil,
+        sslBinary: String = "/usr/bin/openssl",
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
@@ -55,6 +62,11 @@ public final class PassesService: Sendable {
             app: app,
             delegate: delegate,
             signingFilesDirectory: signingFilesDirectory,
+            wwdrCertificate: wwdrCertificate,
+            pemCertificate: pemCertificate,
+            pemPrivateKey: pemPrivateKey,
+            pemPrivateKeyPassword: pemPrivateKeyPassword,
+            sslBinary: sslBinary,
             pushRoutesMiddleware: pushRoutesMiddleware,
             logger: logger
         )

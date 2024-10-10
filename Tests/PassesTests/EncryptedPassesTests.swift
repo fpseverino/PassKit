@@ -22,6 +22,9 @@ final class EncryptedPassesTests: XCTestCase {
             app: app,
             delegate: delegate,
             signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
+            pemCertificate: "encryptedcert.pem",
+            pemPrivateKey: "encryptedkey.pem",
+            pemPrivateKeyPassword: "password",
             pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
             logger: app.logger
         )

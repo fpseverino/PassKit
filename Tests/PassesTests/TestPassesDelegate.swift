@@ -3,9 +3,6 @@ import Passes
 import Vapor
 
 final class TestPassesDelegate: PassesDelegate {
-    let pemCertificate = "certificate.pem"
-    let pemPrivateKey = "key.pem"
-
     func encode<P: PassModel>(pass: P, db: any Database, encoder: JSONEncoder) async throws -> Data {
         guard
             let passData = try await PassData.query(on: db)

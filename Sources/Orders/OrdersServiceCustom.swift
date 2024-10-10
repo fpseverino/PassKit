@@ -28,6 +28,11 @@ where O == R.OrderType, D == R.DeviceType {
     private unowned let delegate: any OrdersDelegate
     private let logger: Logger?
     private let signingFilesDirectory: URL
+    private let wwdrCertificate: String
+    private let pemCertificate: String
+    private let pemPrivateKey: String
+    private let pemPrivateKeyPassword: String?
+    private let sslBinary: URL
     private let encoder = JSONEncoder()
 
     /// Initializes the service and registers all the routes required for Apple Wallet to work.
@@ -36,12 +41,22 @@ where O == R.OrderType, D == R.DeviceType {
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``OrdersDelegate`` to use for order generation.
     ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
+    ///   - wwdrCertificate: The name of Apple's WWDR.pem certificate as contained in `signingFilesDirectory` path.
+    ///   - pemCertificate: The name of the PEM Certificate for signing orders as contained in `signingFilesDirectory` path.
+    ///   - pemPrivateKey: The name of the PEM Certificate's private key for signing orders as contained in `signingFilesDirectory` path.
+    ///   - pemPrivateKeyPassword: The password of the PEM private key file.
+    ///   - sslBinary: The location of the `openssl` command as a file path.
     ///   - pushRoutesMiddleware: The `Middleware` to use for push notification routes. If `nil`, push routes will not be registered.
     ///   - logger: The `Logger` to use.
     public init(
         app: Application,
         delegate: any OrdersDelegate,
         signingFilesDirectory: String,
+        wwdrCertificate: String = "WWDR.pem",
+        pemCertificate: String = "certificate.pem",
+        pemPrivateKey: String = "key.pem",
+        pemPrivateKeyPassword: String? = nil,
+        sslBinary: String = "/usr/bin/openssl",
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
@@ -49,21 +64,22 @@ where O == R.OrderType, D == R.DeviceType {
         self.delegate = delegate
         self.logger = logger
         self.signingFilesDirectory = URL(fileURLWithPath: signingFilesDirectory, isDirectory: true)
+        self.wwdrCertificate = wwdrCertificate
+        self.pemCertificate = pemCertificate
+        self.pemPrivateKey = pemPrivateKey
+        self.pemPrivateKeyPassword = pemPrivateKeyPassword
+        self.sslBinary = URL(fileURLWithPath: sslBinary)
 
-        let privateKeyPath = URL(
-            fileURLWithPath: delegate.pemPrivateKey, relativeTo: self.signingFilesDirectory
-        ).path
+        let privateKeyPath = URL(fileURLWithPath: self.pemPrivateKey, relativeTo: self.signingFilesDirectory).path
         guard FileManager.default.fileExists(atPath: privateKeyPath) else {
             throw OrdersError.pemPrivateKeyMissing
         }
-        let pemPath = URL(
-            fileURLWithPath: delegate.pemCertificate, relativeTo: self.signingFilesDirectory
-        ).path
+        let pemPath = URL(fileURLWithPath: self.pemCertificate, relativeTo: self.signingFilesDirectory).path
         guard FileManager.default.fileExists(atPath: pemPath) else {
             throw OrdersError.pemCertificateMissing
         }
         let apnsConfig: APNSClientConfiguration
-        if let password = delegate.pemPrivateKeyPassword {
+        if let password = self.pemPrivateKeyPassword {
             apnsConfig = APNSClientConfiguration(
                 authenticationMethod: try .tls(
                     privateKey: .privateKey(
@@ -400,20 +416,19 @@ extension OrdersServiceCustom {
         if delegate.generateSignatureFile(in: root) { return }
 
         // Swift Crypto doesn't support encrypted PEM private keys, so we have to use OpenSSL for that.
-        if let password = delegate.pemPrivateKeyPassword {
-            let sslBinary = delegate.sslBinary
-            guard FileManager.default.fileExists(atPath: sslBinary.path) else {
+        if let password = self.pemPrivateKeyPassword {
+            guard FileManager.default.fileExists(atPath: self.sslBinary.path) else {
                 throw OrdersError.opensslBinaryMissing
             }
 
             let proc = Process()
             proc.currentDirectoryURL = self.signingFilesDirectory
-            proc.executableURL = sslBinary
+            proc.executableURL = self.sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
-                "-certfile", delegate.wwdrCertificate,
-                "-signer", delegate.pemCertificate,
-                "-inkey", delegate.pemPrivateKey,
+                "-certfile", self.wwdrCertificate,
+                "-signer", self.pemCertificate,
+                "-inkey", self.pemPrivateKey,
                 "-in", root.appendingPathComponent("manifest.json").path,
                 "-out", root.appendingPathComponent("signature").path,
                 "-outform", "DER",
@@ -431,20 +446,20 @@ extension OrdersServiceCustom {
                 Certificate(
                     pemEncoded: String(
                         contentsOf: self.signingFilesDirectory
-                            .appendingPathComponent(delegate.wwdrCertificate)
+                            .appendingPathComponent(self.wwdrCertificate)
                     )
                 )
             ],
             certificate: Certificate(
                 pemEncoded: String(
                     contentsOf: self.signingFilesDirectory
-                        .appendingPathComponent(delegate.pemCertificate)
+                        .appendingPathComponent(self.pemCertificate)
                 )
             ),
             privateKey: .init(
                 pemEncoded: String(
                     contentsOf: self.signingFilesDirectory
-                        .appendingPathComponent(delegate.pemPrivateKey)
+                        .appendingPathComponent(self.pemPrivateKey)
                 )
             ),
             signingTime: Date()

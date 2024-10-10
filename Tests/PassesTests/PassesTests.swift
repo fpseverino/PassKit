@@ -550,29 +550,4 @@ final class PassesTests: XCTestCase {
             PassesError.invalidNumberOfPasses.description,
             "PassesError(errorType: invalidNumberOfPasses)")
     }
-
-    func testDefaultDelegate() async throws {
-        let delegate = DefaultPassesDelegate()
-        XCTAssertEqual(delegate.wwdrCertificate, "WWDR.pem")
-        XCTAssertEqual(delegate.pemCertificate, "passcertificate.pem")
-        XCTAssertEqual(delegate.pemPrivateKey, "passkey.pem")
-        XCTAssertNil(delegate.pemPrivateKeyPassword)
-        XCTAssertEqual(delegate.sslBinary, URL(fileURLWithPath: "/usr/bin/openssl"))
-        XCTAssertFalse(delegate.generateSignatureFile(in: URL(fileURLWithPath: "")))
-
-        let passData = PassData(title: "Test Pass")
-        try await passData.create(on: app.db)
-        let pass = try await passData.$pass.get(on: app.db)
-        let data = try await delegate.encodePersonalization(for: pass, db: app.db)
-        XCTAssertNil(data)
-    }
-}
-
-final class DefaultPassesDelegate: PassesDelegate {
-    func template<P: PassModel>(for pass: P, db: any Database) async throws -> String { "" }
-    func encode<P: PassModel>(
-        pass: P, db: any Database, encoder: JSONEncoder
-    ) async throws -> Data {
-        Data()
-    }
 }

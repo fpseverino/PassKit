@@ -397,34 +397,19 @@ final class OrdersTests: XCTestCase {
     func testOrdersError() {
         XCTAssertEqual(
             OrdersError.templateNotDirectory.description,
-            "OrdersError(errorType: templateNotDirectory)")
+            "OrdersError(errorType: templateNotDirectory)"
+        )
         XCTAssertEqual(
             OrdersError.pemCertificateMissing.description,
-            "OrdersError(errorType: pemCertificateMissing)")
+            "OrdersError(errorType: pemCertificateMissing)"
+        )
         XCTAssertEqual(
             OrdersError.pemPrivateKeyMissing.description,
-            "OrdersError(errorType: pemPrivateKeyMissing)")
+            "OrdersError(errorType: pemPrivateKeyMissing)"
+        )
         XCTAssertEqual(
             OrdersError.opensslBinaryMissing.description,
-            "OrdersError(errorType: opensslBinaryMissing)")
-    }
-
-    func testDefaultDelegate() {
-        let delegate = DefaultOrdersDelegate()
-        XCTAssertEqual(delegate.wwdrCertificate, "WWDR.pem")
-        XCTAssertEqual(delegate.pemCertificate, "ordercertificate.pem")
-        XCTAssertEqual(delegate.pemPrivateKey, "orderkey.pem")
-        XCTAssertNil(delegate.pemPrivateKeyPassword)
-        XCTAssertEqual(delegate.sslBinary, URL(fileURLWithPath: "/usr/bin/openssl"))
-        XCTAssertFalse(delegate.generateSignatureFile(in: URL(fileURLWithPath: "")))
-    }
-}
-
-final class DefaultOrdersDelegate: OrdersDelegate {
-    func template<O: OrderModel>(for order: O, db: any Database) async throws -> String { "" }
-    func encode<O: OrderModel>(
-        order: O, db: any Database, encoder: JSONEncoder
-    ) async throws -> Data {
-        Data()
+            "OrdersError(errorType: opensslBinaryMissing)"
+        )
     }
 }

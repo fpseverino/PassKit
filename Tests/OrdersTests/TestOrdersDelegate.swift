@@ -3,9 +3,6 @@ import Orders
 import Vapor
 
 final class TestOrdersDelegate: OrdersDelegate {
-    let pemCertificate = "certificate.pem"
-    let pemPrivateKey = "key.pem"
-
     func encode<O: OrderModel>(
         order: O, db: any Database, encoder: JSONEncoder
     ) async throws -> Data {
