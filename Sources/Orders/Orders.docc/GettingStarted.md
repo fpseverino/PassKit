@@ -164,7 +164,7 @@ let orderDelegate = OrderDelegate()
 
 public func configure(_ app: Application) async throws {
     ...
-    let ordersService = try OrdersService(
+    let ordersService = try OrdersService<OrderData>(
         app: app,
         delegate: orderDelegate,
         signingFilesDirectory: "Certificates/Orders/"
@@ -199,6 +199,7 @@ let orderDelegate = OrderDelegate()
 public func configure(_ app: Application) async throws {
     ...
     let ordersService = try OrdersServiceCustom<
+        OrderData,
         MyOrderType,
         MyDeviceType,
         MyOrdersRegistrationType,
@@ -216,7 +217,7 @@ public func configure(_ app: Application) async throws {
 If you're using the default schemas provided by this framework, you can register the default models in your `configure(_:)` method:
 
 ```swift
-OrdersService.register(migrations: app.migrations)
+OrdersService<OrderData>.register(migrations: app.migrations)
 ```
 
 > Important: Register the default models before the migration of your order data model.
@@ -231,7 +232,7 @@ import Vapor
 import Orders
 
 struct OrdersController: RouteCollection {
-    let ordersService: OrdersService
+    let ordersService: OrdersService<OrderData>
 
     func boot(routes: RoutesBuilder) throws {
         ...

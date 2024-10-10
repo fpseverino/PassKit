@@ -188,7 +188,7 @@ let passDelegate = PassDelegate()
 
 public func configure(_ app: Application) async throws {
     ...
-    let passesService = try PassesService(
+    let passesService = try PassesService<PassData>(
         app: app,
         delegate: passDelegate,
         signingFilesDirectory: "Certificates/Passes/",
@@ -223,6 +223,7 @@ let passDelegate = PassDelegate()
 public func configure(_ app: Application) async throws {
     ...
     let passesService = try PassesServiceCustom<
+        PassData,
         MyPassType,
         MyUserPersonalizationType,
         MyDeviceType,
@@ -241,7 +242,7 @@ public func configure(_ app: Application) async throws {
 If you're using the default schemas provided by this framework, you can register the default models in your `configure(_:)` method:
 
 ```swift
-PassesService.register(migrations: app.migrations)
+PassesService<PassData>.register(migrations: app.migrations)
 ```
 
 > Important: Register the default models before the migration of your pass data model.
@@ -256,7 +257,7 @@ import Vapor
 import Passes
 
 struct PassesController: RouteCollection {
-    let passesService: PassesService
+    let passesService: PassesService<PassData>
 
     func boot(routes: RoutesBuilder) throws {
         ...
