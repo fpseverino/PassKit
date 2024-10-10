@@ -6,20 +6,21 @@ import Testing
 import Vapor
 import Zip
 
-package func withApp(
+func withApp(
     delegate: some PassesDelegate,
     isEncrypted: Bool = false,
-    _ body: (Application, PassesService) async throws -> Void
+    _ body: (Application, PassesService<PassData>) async throws -> Void
 ) async throws {
     let app = try await Application.make(.testing)
     try #require(isLoggingConfigured)
 
     app.databases.use(.sqlite(.memory), as: .sqlite)
-    PassesService.register(migrations: app.migrations)
+    PassesService<PassData>.register(migrations: app.migrations)
     app.migrations.add(CreatePassData())
-    let passesService = try PassesService(
+    let passesService = try PassesService<PassData>(
         app: app,
         delegate: delegate,
+        dbID: .sqlite,
         signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
         pemCertificate: isEncrypted ? "encryptedcert.pem" : "certificate.pem",
         pemPrivateKey: isEncrypted ? "encryptedkey.pem" : "key.pem",
@@ -27,7 +28,6 @@ package func withApp(
         pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
         logger: app.logger
     )
-    app.databases.middleware.use(PassDataMiddleware(service: passesService), on: .sqlite)
     try await app.autoMigrate()
     Zip.addCustomFileExtension("pkpass")
 

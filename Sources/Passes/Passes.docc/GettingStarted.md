@@ -146,7 +146,7 @@ import Passes
 
 final class PassDelegate: PassesDelegate {
     func encode<P: PassModel>(pass: P, db: Database, encoder: JSONEncoder) async throws -> Data {
-        // The specific PassData class you use here may vary based on the `pass.passTypeIdentifier`
+        // The specific PassData class you use here may vary based on the `pass.typeIdentifier`
         // if you have multiple different types of passes, and thus multiple types of pass data.
         guard let passData = try await PassData.query(on: db)
             .filter(\.$pass.$id == pass.requireID())
@@ -245,52 +245,6 @@ PassesService.register(migrations: app.migrations)
 ```
 
 > Important: Register the default models before the migration of your pass data model.
-
-### Pass Data Model Middleware
-
-You'll want to create a model middleware to handle the creation and update of the pass data model.
-This middleware could be responsible for creating and linking a ``Pass`` to the pass data model, depending on your requirements.
-When your pass data changes, it should also update the ``Pass/updatedAt`` field of the ``Pass`` and send a push notification to all devices registered to that pass. 
-
-```swift
-import Vapor
-import Fluent
-import Passes
-
-struct PassDataMiddleware: AsyncModelMiddleware {
-    private unowned let service: PassesService
-
-    init(service: PassesService) {
-        self.service = service
-    }
-
-    // Create the `Pass` and add it to the `PassData` automatically at creation
-    func create(model: PassData, on db: Database, next: AnyAsyncModelResponder) async throws {
-        let pass = Pass(
-            passTypeIdentifier: Environment.get("PASS_TYPE_IDENTIFIER")!,
-            authenticationToken: Data([UInt8].random(count: 12)).base64EncodedString())
-        try await pass.save(on: db)
-        model.$pass.id = try pass.requireID()
-        try await next.create(model, on: db)
-    }
-
-    func update(model: PassData, on db: Database, next: AnyAsyncModelResponder) async throws {
-        let pass = try await model.$pass.get(on: db)
-        pass.updatedAt = Date()
-        try await pass.save(on: db)
-        try await next.update(model, on: db)
-        try await service.sendPushNotifications(for: pass, on: db)
-    }
-}
-```
-
-You could register it in the `configure.swift` file.
-
-```swift
-app.databases.middleware.use(PassDataMiddleware(service: passesService), on: .psql)
-```
-
-> Important: Whenever your pass data changes, you must update the ``Pass/updatedAt`` time of the linked ``Pass`` so that Wallet knows to retrieve a new pass.
 
 ### Generate the Pass Content
 

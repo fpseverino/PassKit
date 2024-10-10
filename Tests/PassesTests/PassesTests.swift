@@ -98,7 +98,7 @@ struct PassesTests {
 
             try await app.test(
                 .GET,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: [
                     "Authorization": "ApplePass \(pass.authenticationToken)",
                     "If-Modified-Since": "0",
@@ -114,7 +114,7 @@ struct PassesTests {
             // Test call with invalid authentication token
             try await app.test(
                 .GET,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: [
                     "Authorization": "ApplePass invalid-token",
                     "If-Modified-Since": "0",
@@ -127,7 +127,7 @@ struct PassesTests {
             // Test distant future `If-Modified-Since` date
             try await app.test(
                 .GET,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: [
                     "Authorization": "ApplePass \(pass.authenticationToken)",
                     "If-Modified-Since": "2147483647",
@@ -140,7 +140,7 @@ struct PassesTests {
             // Test call with invalid pass ID
             try await app.test(
                 .GET,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/invalid-uuid",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/invalid-uuid",
                 headers: [
                     "Authorization": "ApplePass \(pass.authenticationToken)",
                     "If-Modified-Since": "0",
@@ -185,7 +185,7 @@ struct PassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/\(pass.requireID())/personalize",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/\(pass.requireID())/personalize",
                 beforeRequest: { req async throws in
                     try req.content.encode(personalizationDict)
                 },
@@ -211,7 +211,7 @@ struct PassesTests {
             // Test call with invalid pass ID
             try await app.test(
                 .POST,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/invalid-uuid/personalize",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/invalid-uuid/personalize",
                 beforeRequest: { req async throws in
                     try req.content.encode(personalizationDict)
                 },
@@ -244,7 +244,7 @@ struct PassesTests {
 
             try await app.test(
                 .GET,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)?passesUpdatedSince=0",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)?passesUpdatedSince=0",
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
                 }
@@ -252,7 +252,7 @@ struct PassesTests {
 
             try await app.test(
                 .DELETE,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .notFound)
@@ -262,7 +262,7 @@ struct PassesTests {
             // Test registration without authentication token
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
                 },
@@ -287,7 +287,7 @@ struct PassesTests {
             // Test call without DTO
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -297,7 +297,7 @@ struct PassesTests {
             // Test call with invalid UUID
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\("not-a-uuid")",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -309,7 +309,7 @@ struct PassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -322,7 +322,7 @@ struct PassesTests {
             // Test registration of an already registered device
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -334,7 +334,7 @@ struct PassesTests {
 
             try await app.test(
                 .GET,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)?passesUpdatedSince=0",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)?passesUpdatedSince=0",
                 afterResponse: { res async throws in
                     let passes = try res.content.decode(PassesForDeviceDTO.self)
                     #expect(passes.serialNumbers.count == 1)
@@ -346,7 +346,7 @@ struct PassesTests {
 
             try await app.test(
                 .GET,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     let pushTokens = try res.content.decode([String].self)
@@ -358,7 +358,7 @@ struct PassesTests {
             // Test call with invalid UUID
             try await app.test(
                 .GET,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\("not-a-uuid")",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -368,7 +368,7 @@ struct PassesTests {
             // Test call with invalid UUID
             try await app.test(
                 .DELETE,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\("not-a-uuid")",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -377,7 +377,7 @@ struct PassesTests {
 
             try await app.test(
                 .DELETE,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .ok)
@@ -438,14 +438,14 @@ struct PassesTests {
             try await passData.create(on: app.db)
             let pass = try await passData._$pass.get(on: app.db)
 
-            try await passesService.sendPushNotificationsForPass(id: pass.requireID(), of: pass.passTypeIdentifier, on: app.db)
+            try await passesService.sendPushNotifications(for: pass, on: app.db)
 
             let deviceLibraryIdentifier = "abcdefg"
             let pushToken = "1234567890"
 
             try await app.test(
                 .POST,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
@@ -454,7 +454,7 @@ struct PassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -466,7 +466,7 @@ struct PassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .internalServerError)
@@ -476,7 +476,7 @@ struct PassesTests {
             // Test call with invalid UUID
             try await app.test(
                 .POST,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\("not-a-uuid")",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)

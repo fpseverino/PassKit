@@ -32,6 +32,9 @@ import FluentKit
 public protocol PassDataModel: Model {
     associatedtype PassType: PassModel
 
+    /// The pass type identifier that’s registered with Apple.
+    static var typeIdentifier: String { get }
+
     /// The foreign key to the pass table.
     var pass: PassType { get set }
 }

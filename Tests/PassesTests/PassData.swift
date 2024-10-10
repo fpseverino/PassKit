@@ -7,6 +7,8 @@ import struct Foundation.UUID
 final class PassData: PassDataModel, @unchecked Sendable {
     static let schema = PassData.FieldKeys.schemaName
 
+    static let typeIdentifier = "pass.com.vapor-community.PassKit"
+
     @ID(key: .id)
     var id: UUID?
 
@@ -50,7 +52,7 @@ struct PassJSONData: PassJSON.Properties {
     let description: String
     let formatVersion = PassJSON.FormatVersion.v1
     let organizationName = "vapor-community"
-    let passTypeIdentifier = "pass.com.vapor-community.PassKit"
+    let passTypeIdentifier = PassData.typeIdentifier
     let serialNumber: String
     let teamIdentifier = "K6512ZA2S5"
 
@@ -97,34 +99,5 @@ struct PassJSONData: PassJSON.Properties {
         self.description = data.title
         self.serialNumber = pass.id!.uuidString
         self.authenticationToken = pass.authenticationToken
-    }
-}
-
-struct PassDataMiddleware: AsyncModelMiddleware {
-    private unowned let service: PassesService
-
-    init(service: PassesService) {
-        self.service = service
-    }
-
-    func create(
-        model: PassData, on db: any Database, next: any AnyAsyncModelResponder
-    ) async throws {
-        let pass = Pass(
-            passTypeIdentifier: "pass.com.vapor-community.PassKit",
-            authenticationToken: Data([UInt8].random(count: 12)).base64EncodedString())
-        try await pass.save(on: db)
-        model.$pass.id = try pass.requireID()
-        try await next.create(model, on: db)
-    }
-
-    func update(
-        model: PassData, on db: any Database, next: any AnyAsyncModelResponder
-    ) async throws {
-        let pass = try await model.$pass.get(on: db)
-        pass.updatedAt = Date()
-        try await pass.save(on: db)
-        try await next.update(model, on: db)
-        try await service.sendPushNotifications(for: pass, on: db)
     }
 }

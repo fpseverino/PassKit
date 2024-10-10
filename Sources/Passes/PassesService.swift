@@ -30,14 +30,15 @@ import FluentKit
 import Vapor
 
 /// The main class that handles PassKit passes.
-public final class PassesService: Sendable {
-    private let service: PassesServiceCustom<Pass, UserPersonalization, PassesDevice, PassesRegistration, PassesErrorLog>
+public final class PassesService<PD: PassDataModel>: Sendable where PD.PassType == Pass {
+    private let service: PassesServiceCustom<PD, Pass, UserPersonalization, PassesDevice, PassesRegistration, PassesErrorLog>
 
     /// Initializes the service and registers all the routes required for PassKit to work.
     ///
     /// - Parameters:
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``PassesDelegate`` to use for pass generation.
+    ///   - dbID: The `DatabaseID` on which to register the middleware.
     ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
     ///   - wwdrCertificate: The name of Apple's WWDR.pem certificate as contained in `signingFilesDirectory` path.
     ///   - pemCertificate: The name of the PEM Certificate for signing passes as contained in `signingFilesDirectory` path.
@@ -49,6 +50,7 @@ public final class PassesService: Sendable {
     public init(
         app: Application,
         delegate: any PassesDelegate,
+        dbID: DatabaseID,
         signingFilesDirectory: String,
         wwdrCertificate: String = "WWDR.pem",
         pemCertificate: String = "certificate.pem",
@@ -61,6 +63,7 @@ public final class PassesService: Sendable {
         self.service = try .init(
             app: app,
             delegate: delegate,
+            dbID: dbID,
             signingFilesDirectory: signingFilesDirectory,
             wwdrCertificate: wwdrCertificate,
             pemCertificate: pemCertificate,
@@ -105,16 +108,6 @@ public final class PassesService: Sendable {
         migrations.add(PassesDevice())
         migrations.add(PassesRegistration())
         migrations.add(PassesErrorLog())
-    }
-
-    /// Sends push notifications for a given pass.
-    ///
-    /// - Parameters:
-    ///   - id: The `UUID` of the pass to send the notifications for.
-    ///   - passTypeIdentifier: The type identifier of the pass.
-    ///   - db: The `Database` to use.
-    public func sendPushNotificationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws {
-        try await service.sendPushNotificationsForPass(id: id, of: passTypeIdentifier, on: db)
     }
 
     /// Sends push notifications for a given pass.

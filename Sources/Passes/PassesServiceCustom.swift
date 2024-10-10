@@ -23,8 +23,8 @@ import Zip
 /// - Device Type
 /// - Registration Type
 /// - Error Log Type
-public final class PassesServiceCustom<P, U, D, R: PassesRegistrationModel, E: ErrorLogModel>: Sendable
-where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
+public final class PassesServiceCustom<PD: PassDataModel, P, U, D, R: PassesRegistrationModel, E: ErrorLogModel>: Sendable
+where PD.PassType == P, P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     private unowned let app: Application
     private unowned let delegate: any PassesDelegate
     private let logger: Logger?
@@ -41,6 +41,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     /// - Parameters:
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``PassesDelegate`` to use for pass generation.
+    ///   - dbID: The `DatabaseID` on which to register the middleware.
     ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
     ///   - wwdrCertificate: The name of Apple's WWDR.pem certificate as contained in `signingFilesDirectory` path.
     ///   - pemCertificate: The name of the PEM Certificate for signing passes as contained in `signingFilesDirectory` path.
@@ -52,6 +53,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     public init(
         app: Application,
         delegate: any PassesDelegate,
+        dbID: DatabaseID,
         signingFilesDirectory: String,
         wwdrCertificate: String = "WWDR.pem",
         pemCertificate: String = "certificate.pem",
@@ -70,6 +72,8 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
         self.pemPrivateKey = pemPrivateKey
         self.pemPrivateKeyPassword = pemPrivateKeyPassword
         self.sslBinary = URL(fileURLWithPath: sslBinary)
+
+        app.databases.middleware.use(self, on: dbID)
 
         let privateKeyPath = URL(fileURLWithPath: self.pemPrivateKey, relativeTo: self.signingFilesDirectory).path
         guard FileManager.default.fileExists(atPath: privateKeyPath) else {
@@ -115,30 +119,30 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
 
         let v1 = app.grouped("api", "passes", "v1")
         v1.get(
-            "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
+            "devices", ":deviceLibraryIdentifier", "registrations", "\(PD.typeIdentifier)",
             use: { try await self.passesForDevice(req: $0) }
         )
         v1.post("log", use: { try await self.logError(req: $0) })
         v1.post(
-            "passes", ":passTypeIdentifier", ":passSerial", "personalize",
+            "passes", "\(PD.typeIdentifier)", ":passSerial", "personalize",
             use: { try await self.personalizedPass(req: $0) }
         )
 
         let v1auth = v1.grouped(ApplePassMiddleware<P>())
         v1auth.post(
-            "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
+            "devices", ":deviceLibraryIdentifier", "registrations", "\(PD.typeIdentifier)",
             ":passSerial", use: { try await self.registerDevice(req: $0) }
         )
-        v1auth.get("passes", ":passTypeIdentifier", ":passSerial", use: { try await self.latestVersionOfPass(req: $0) })
+        v1auth.get("passes", "\(PD.typeIdentifier)", ":passSerial", use: { try await self.latestVersionOfPass(req: $0) })
         v1auth.delete(
-            "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
+            "devices", ":deviceLibraryIdentifier", "registrations", "\(PD.typeIdentifier)",
             ":passSerial", use: { try await self.unregisterDevice(req: $0) }
         )
 
         if let pushRoutesMiddleware {
             let pushAuth = v1.grouped(pushRoutesMiddleware)
-            pushAuth.post("push", ":passTypeIdentifier", ":passSerial", use: { try await self.pushUpdatesForPass(req: $0) })
-            pushAuth.get("push", ":passTypeIdentifier", ":passSerial", use: { try await self.tokensForPassUpdate(req: $0) })
+            pushAuth.post("push", "\(PD.typeIdentifier)", ":passSerial", use: { try await self.pushUpdatesForPass(req: $0) })
+            pushAuth.get("push", "\(PD.typeIdentifier)", ":passSerial", use: { try await self.tokensForPassUpdate(req: $0) })
         }
     }
 }
@@ -158,11 +162,10 @@ extension PassesServiceCustom {
         guard let serial = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
         let deviceLibraryIdentifier = req.parameters.get("deviceLibraryIdentifier")!
         guard
             let pass = try await P.query(on: req.db)
-                .filter(\._$passTypeIdentifier == passTypeIdentifier)
+                .filter(\._$typeIdentifier == PD.typeIdentifier)
                 .filter(\._$id == serial)
                 .first()
         else {
@@ -189,7 +192,7 @@ extension PassesServiceCustom {
     ) async throws -> HTTPStatus {
         let r = try await R.for(
             deviceLibraryIdentifier: device.deviceLibraryIdentifier,
-            passTypeIdentifier: pass.passTypeIdentifier,
+            typeIdentifier: PD.typeIdentifier,
             on: db
         )
         .filter(P.self, \._$id == pass.requireID())
@@ -207,12 +210,11 @@ extension PassesServiceCustom {
     func passesForDevice(req: Request) async throws -> PassesForDeviceDTO {
         logger?.debug("Called passesForDevice")
 
-        let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
         let deviceLibraryIdentifier = req.parameters.get("deviceLibraryIdentifier")!
 
         var query = R.for(
             deviceLibraryIdentifier: deviceLibraryIdentifier,
-            passTypeIdentifier: passTypeIdentifier,
+            typeIdentifier: PD.typeIdentifier,
             on: req.db
         )
         if let since: TimeInterval = req.query["passesUpdatedSince"] {
@@ -246,15 +248,13 @@ extension PassesServiceCustom {
             ifModifiedSince = ims
         }
 
-        guard let passTypeIdentifier = req.parameters.get("passTypeIdentifier"),
-            let id = req.parameters.get("passSerial", as: UUID.self)
-        else {
+        guard let id = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
         guard
             let pass = try await P.query(on: req.db)
                 .filter(\._$id == id)
-                .filter(\._$passTypeIdentifier == passTypeIdentifier)
+                .filter(\._$typeIdentifier == PD.typeIdentifier)
                 .first()
         else {
             throw Abort(.notFound)
@@ -281,13 +281,13 @@ extension PassesServiceCustom {
         guard let passId = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
         let deviceLibraryIdentifier = req.parameters.get("deviceLibraryIdentifier")!
 
         guard
             let r = try await R.for(
                 deviceLibraryIdentifier: deviceLibraryIdentifier,
-                passTypeIdentifier: passTypeIdentifier, on: req.db
+                typeIdentifier: PD.typeIdentifier,
+                on: req.db
             )
             .filter(P.self, \._$id == passId)
             .first()
@@ -319,15 +319,13 @@ extension PassesServiceCustom {
     func personalizedPass(req: Request) async throws -> Response {
         logger?.debug("Called personalizedPass")
 
-        guard let passTypeIdentifier = req.parameters.get("passTypeIdentifier"),
-            let id = req.parameters.get("passSerial", as: UUID.self)
-        else {
+        guard let id = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
         guard
             let pass = try await P.query(on: req.db)
                 .filter(\._$id == id)
-                .filter(\._$passTypeIdentifier == passTypeIdentifier)
+                .filter(\._$typeIdentifier == PD.typeIdentifier)
                 .first()
         else {
             throw Abort(.notFound)
@@ -423,9 +421,10 @@ extension PassesServiceCustom {
         guard let id = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
-
-        try await sendPushNotificationsForPass(id: id, of: passTypeIdentifier, on: req.db)
+        guard let pass = try await P.find(id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        try await sendPushNotifications(for: pass, on: req.db)
         return .noContent
     }
 
@@ -435,9 +434,8 @@ extension PassesServiceCustom {
         guard let id = req.parameters.get("passSerial", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
 
-        return try await Self.registrationsForPass(id: id, of: passTypeIdentifier, on: req.db).map { $0.device.pushToken }
+        return try await Self.registrationsForPass(id: id, on: req.db).map { $0.device.pushToken }
     }
 }
 
@@ -446,39 +444,29 @@ extension PassesServiceCustom {
     /// Sends push notifications for a given pass.
     ///
     /// - Parameters:
-    ///   - id: The `UUID` of the pass to send the notifications for.
-    ///   - passTypeIdentifier: The type identifier of the pass.
+    ///   - pass: The pass to send the notifications for.
     ///   - db: The `Database` to use.
-    public func sendPushNotificationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws {
-        let registrations = try await Self.registrationsForPass(id: id, of: passTypeIdentifier, on: db)
-        for reg in registrations {
+    public func sendPushNotifications(for pass: P, on db: any Database) async throws {
+        let registrations = try await Self.registrationsForPass(id: pass.requireID(), on: db)
+        for registration in registrations {
             let backgroundNotification = APNSBackgroundNotification(
                 expiration: .immediately,
-                topic: reg.pass.passTypeIdentifier,
+                topic: PD.typeIdentifier,
                 payload: EmptyPayload()
             )
             do {
                 try await app.apns.client(.init(string: "passes")).sendBackgroundNotification(
                     backgroundNotification,
-                    deviceToken: reg.device.pushToken
+                    deviceToken: registration.device.pushToken
                 )
             } catch let error as APNSCore.APNSError where error.reason == .badDeviceToken {
-                try await reg.device.delete(on: db)
-                try await reg.delete(on: db)
+                try await registration.device.delete(on: db)
+                try await registration.delete(on: db)
             }
         }
     }
 
-    /// Sends push notifications for a given pass.
-    ///
-    /// - Parameters:
-    ///   - pass: The pass to send the notifications for.
-    ///   - db: The `Database` to use.
-    public func sendPushNotifications(for pass: P, on db: any Database) async throws {
-        try await sendPushNotificationsForPass(id: pass.requireID(), of: pass.passTypeIdentifier, on: db)
-    }
-
-    static func registrationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws -> [R] {
+    static func registrationsForPass(id: UUID, on db: any Database) async throws -> [R] {
         // This could be done by enforcing the caller to have a Siblings property wrapper,
         // but there's not really any value to forcing that on them when we can just do the query ourselves like this.
         try await R.query(on: db)
@@ -486,7 +474,7 @@ extension PassesServiceCustom {
             .join(parent: \._$device)
             .with(\._$pass)
             .with(\._$device)
-            .filter(P.self, \._$passTypeIdentifier == passTypeIdentifier)
+            .filter(P.self, \._$typeIdentifier == PD.typeIdentifier)
             .filter(P.self, \._$id == id)
             .all()
     }

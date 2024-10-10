@@ -56,7 +56,7 @@ struct EncryptedPassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)passes/\(pass.passTypeIdentifier)/\(pass.requireID())/personalize",
+                "\(passesURI)passes/\(PassData.typeIdentifier)/\(pass.requireID())/personalize",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(personalizationDict)
@@ -90,14 +90,14 @@ struct EncryptedPassesTests {
             try await passData.create(on: app.db)
             let pass = try await passData._$pass.get(on: app.db)
 
-            try await passesService.sendPushNotificationsForPass(id: pass.requireID(), of: pass.passTypeIdentifier, on: app.db)
+            try await passesService.sendPushNotifications(for: pass, on: app.db)
 
             let deviceLibraryIdentifier = "abcdefg"
             let pushToken = "1234567890"
 
             try await app.test(
                 .POST,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
@@ -106,7 +106,7 @@ struct EncryptedPassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)devices/\(deviceLibraryIdentifier)/registrations/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["Authorization": "ApplePass \(pass.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -118,7 +118,7 @@ struct EncryptedPassesTests {
 
             try await app.test(
                 .POST,
-                "\(passesURI)push/\(pass.passTypeIdentifier)/\(pass.requireID())",
+                "\(passesURI)push/\(PassData.typeIdentifier)/\(pass.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .internalServerError)

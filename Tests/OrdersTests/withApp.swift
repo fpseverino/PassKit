@@ -6,7 +6,7 @@ import Testing
 import Vapor
 import Zip
 
-package func withApp(
+func withApp(
     delegate: some OrdersDelegate,
     isEncrypted: Bool = false,
     _ body: (Application, OrdersService) async throws -> Void
