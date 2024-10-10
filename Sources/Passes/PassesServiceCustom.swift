@@ -583,11 +583,8 @@ extension PassesServiceCustom {
             .write(to: root.appendingPathComponent("pass.json"))
 
         // Pass Personalization
-        if let encodedPersonalization = try await self.delegate.encodePersonalization(
-            for: pass, db: db, encoder: encoder)
-        {
-            try encodedPersonalization.write(
-                to: root.appendingPathComponent("personalization.json"))
+        if let encodedPersonalization = try await self.delegate.encodePersonalization(for: pass, db: db, encoder: encoder) {
+            try encoder.encode(encodedPersonalization).write(to: root.appendingPathComponent("personalization.json"))
             files.append(URL(fileURLWithPath: "personalization.json", relativeTo: root))
         }
 

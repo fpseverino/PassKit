@@ -22,28 +22,6 @@ final class OrderData: OrderDataModel, @unchecked Sendable {
         self.id = id
         self.title = title
     }
-
-    func toDTO() -> OrderDataDTO {
-        .init(
-            id: self.id,
-            title: self.$title.value
-        )
-    }
-}
-
-struct OrderDataDTO: Content {
-    var id: UUID?
-    var title: String?
-
-    func toModel() -> OrderData {
-        let model = OrderData()
-
-        model.id = self.id
-        if let title = self.title {
-            model.title = title
-        }
-        return model
-    }
 }
 
 struct CreateOrderData: AsyncMigration {
@@ -51,10 +29,7 @@ struct CreateOrderData: AsyncMigration {
         try await database.schema(OrderData.FieldKeys.schemaName)
             .id()
             .field(OrderData.FieldKeys.title, .string, .required)
-            .field(
-                OrderData.FieldKeys.orderID, .uuid, .required,
-                .references(Order.schema, .id, onDelete: .cascade)
-            )
+            .field(OrderData.FieldKeys.orderID, .uuid, .required, .references(Order.schema, .id, onDelete: .cascade))
             .create()
     }
 

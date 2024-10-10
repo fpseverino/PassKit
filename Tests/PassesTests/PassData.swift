@@ -22,28 +22,6 @@ final class PassData: PassDataModel, @unchecked Sendable {
         self.id = id
         self.title = title
     }
-
-    func toDTO() -> PassDataDTO {
-        .init(
-            id: self.id,
-            title: self.$title.value
-        )
-    }
-}
-
-struct PassDataDTO: Content {
-    var id: UUID?
-    var title: String?
-
-    func toModel() -> PassData {
-        let model = PassData()
-
-        model.id = self.id
-        if let title = self.title {
-            model.title = title
-        }
-        return model
-    }
 }
 
 struct CreatePassData: AsyncMigration {
@@ -51,10 +29,7 @@ struct CreatePassData: AsyncMigration {
         try await database.schema(PassData.FieldKeys.schemaName)
             .id()
             .field(PassData.FieldKeys.title, .string, .required)
-            .field(
-                PassData.FieldKeys.passID, .uuid, .required,
-                .references(Pass.schema, .id, onDelete: .cascade)
-            )
+            .field(PassData.FieldKeys.passID, .uuid, .required, .references(Pass.schema, .id, onDelete: .cascade))
             .create()
     }
 
@@ -123,16 +98,6 @@ struct PassJSONData: PassJSON.Properties {
         self.serialNumber = pass.id!.uuidString
         self.authenticationToken = pass.authenticationToken
     }
-}
-
-struct PersonalizationJSONData: PersonalizationJSON.Properties {
-    var requiredPersonalizationFields = [
-        PersonalizationJSON.PersonalizationField.name,
-        PersonalizationJSON.PersonalizationField.postalCode,
-        PersonalizationJSON.PersonalizationField.emailAddress,
-        PersonalizationJSON.PersonalizationField.phoneNumber,
-    ]
-    var description = "Hello, World!"
 }
 
 struct PassDataMiddleware: AsyncModelMiddleware {
