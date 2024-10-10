@@ -64,7 +64,7 @@ extension Order {
         static let schemaName = "orders"
         static let createdAt = FieldKey(stringLiteral: "created_at")
         static let updatedAt = FieldKey(stringLiteral: "updated_at")
-        static let typeIdentifier = FieldKey(stringLiteral: "order_type_identifier")
+        static let typeIdentifier = FieldKey(stringLiteral: "type_identifier")
         static let authenticationToken = FieldKey(stringLiteral: "authentication_token")
     }
 }

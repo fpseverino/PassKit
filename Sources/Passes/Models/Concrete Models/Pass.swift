@@ -72,7 +72,7 @@ extension Pass {
     enum FieldKeys {
         static let schemaName = "passes"
         static let updatedAt = FieldKey(stringLiteral: "updated_at")
-        static let typeIdentifier = FieldKey(stringLiteral: "pass_type_identifier")
+        static let typeIdentifier = FieldKey(stringLiteral: "type_identifier")
         static let authenticationToken = FieldKey(stringLiteral: "authentication_token")
         static let userPersonalizationID = FieldKey(stringLiteral: "user_personalization_id")
     }
