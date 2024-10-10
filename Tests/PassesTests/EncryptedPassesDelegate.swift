@@ -3,8 +3,6 @@ import Passes
 import Vapor
 
 final class EncryptedPassesDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/"
-
     let pemCertificate = "encryptedcert.pem"
     let pemPrivateKey = "encryptedkey.pem"
 

@@ -3,8 +3,6 @@ import Orders
 import Vapor
 
 final class EncryptedOrdersDelegate: OrdersDelegate {
-    let sslSigningFilesDirectory = "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/"
-
     let pemCertificate = "encryptedcert.pem"
     let pemPrivateKey = "encryptedkey.pem"
 

@@ -17,14 +17,22 @@ public final class OrdersService: Sendable {
     /// - Parameters:
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``OrdersDelegate`` to use for order generation.
+    ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
     ///   - pushRoutesMiddleware: The `Middleware` to use for push notification routes. If `nil`, push routes will not be registered.
     ///   - logger: The `Logger` to use.
     public init(
-        app: Application, delegate: any OrdersDelegate,
-        pushRoutesMiddleware: (any Middleware)? = nil, logger: Logger? = nil
+        app: Application,
+        delegate: any OrdersDelegate,
+        signingFilesDirectory: String,
+        pushRoutesMiddleware: (any Middleware)? = nil,
+        logger: Logger? = nil
     ) throws {
         service = try .init(
-            app: app, delegate: delegate, pushRoutesMiddleware: pushRoutesMiddleware, logger: logger
+            app: app,
+            delegate: delegate,
+            signingFilesDirectory: signingFilesDirectory,
+            pushRoutesMiddleware: pushRoutesMiddleware,
+            logger: logger
         )
     }
 

@@ -30,7 +30,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     private unowned let app: Application
     private unowned let delegate: any PassesDelegate
     private let logger: Logger?
-    private let sslSigningFilesDirectory: URL
+    private let signingFilesDirectory: URL
     private let encoder = JSONEncoder()
 
     /// Initializes the service and registers all the routes required for PassKit to work.
@@ -38,24 +38,26 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     /// - Parameters:
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``PassesDelegate`` to use for pass generation.
+    ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
     ///   - pushRoutesMiddleware: The `Middleware` to use for push notification routes. If `nil`, push routes will not be registered.
     ///   - logger: The `Logger` to use.
     public init(
         app: Application,
         delegate: any PassesDelegate,
+        signingFilesDirectory: String,
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
         self.app = app
         self.delegate = delegate
         self.logger = logger
-        self.sslSigningFilesDirectory = URL(fileURLWithPath: delegate.sslSigningFilesDirectory, isDirectory: true)
+        self.signingFilesDirectory = URL(fileURLWithPath: signingFilesDirectory, isDirectory: true)
 
-        let privateKeyPath = URL(fileURLWithPath: delegate.pemPrivateKey, relativeTo: self.sslSigningFilesDirectory).path
+        let privateKeyPath = URL(fileURLWithPath: delegate.pemPrivateKey, relativeTo: self.signingFilesDirectory).path
         guard FileManager.default.fileExists(atPath: privateKeyPath) else {
             throw PassesError.pemPrivateKeyMissing
         }
-        let pemPath = URL(fileURLWithPath: delegate.pemCertificate, relativeTo: self.sslSigningFilesDirectory).path
+        let pemPath = URL(fileURLWithPath: delegate.pemCertificate, relativeTo: self.signingFilesDirectory).path
         guard FileManager.default.fileExists(atPath: pemPath) else {
             throw PassesError.pemCertificateMissing
         }
@@ -347,7 +349,7 @@ extension PassesServiceCustom {
             try token.write(to: tokenURL)
 
             let proc = Process()
-            proc.currentDirectoryURL = self.sslSigningFilesDirectory
+            proc.currentDirectoryURL = self.signingFilesDirectory
             proc.executableURL = sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
@@ -369,20 +371,20 @@ extension PassesServiceCustom {
                 additionalIntermediateCertificates: [
                     Certificate(
                         pemEncoded: String(
-                            contentsOf: self.sslSigningFilesDirectory
+                            contentsOf: self.signingFilesDirectory
                                 .appendingPathComponent(delegate.wwdrCertificate)
                         )
                     )
                 ],
                 certificate: Certificate(
                     pemEncoded: String(
-                        contentsOf: self.sslSigningFilesDirectory
+                        contentsOf: self.signingFilesDirectory
                             .appendingPathComponent(delegate.pemCertificate)
                     )
                 ),
                 privateKey: .init(
                     pemEncoded: String(
-                        contentsOf: self.sslSigningFilesDirectory
+                        contentsOf: self.signingFilesDirectory
                             .appendingPathComponent(delegate.pemPrivateKey)
                     )
                 ),
@@ -511,7 +513,7 @@ extension PassesServiceCustom {
             }
 
             let proc = Process()
-            proc.currentDirectoryURL = self.sslSigningFilesDirectory
+            proc.currentDirectoryURL = self.signingFilesDirectory
             proc.executableURL = sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
@@ -534,20 +536,20 @@ extension PassesServiceCustom {
             additionalIntermediateCertificates: [
                 Certificate(
                     pemEncoded: String(
-                        contentsOf: self.sslSigningFilesDirectory
+                        contentsOf: self.signingFilesDirectory
                             .appendingPathComponent(delegate.wwdrCertificate)
                     )
                 )
             ],
             certificate: Certificate(
                 pemEncoded: String(
-                    contentsOf: self.sslSigningFilesDirectory
+                    contentsOf: self.signingFilesDirectory
                         .appendingPathComponent(delegate.pemCertificate)
                 )
             ),
             privateKey: .init(
                 pemEncoded: String(
-                    contentsOf: self.sslSigningFilesDirectory
+                    contentsOf: self.signingFilesDirectory
                         .appendingPathComponent(delegate.pemPrivateKey)
                 )
             ),

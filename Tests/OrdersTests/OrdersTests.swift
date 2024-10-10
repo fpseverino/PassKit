@@ -21,6 +21,7 @@ final class OrdersTests: XCTestCase {
         ordersService = try OrdersService(
             app: app,
             delegate: delegate,
+            signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
             pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
             logger: app.logger
         )
@@ -420,7 +421,6 @@ final class OrdersTests: XCTestCase {
 }
 
 final class DefaultOrdersDelegate: OrdersDelegate {
-    let sslSigningFilesDirectory = ""
     func template<O: OrderModel>(for order: O, db: any Database) async throws -> String { "" }
     func encode<O: OrderModel>(
         order: O, db: any Database, encoder: JSONEncoder

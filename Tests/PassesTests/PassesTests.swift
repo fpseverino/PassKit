@@ -21,6 +21,7 @@ final class PassesTests: XCTestCase {
         passesService = try PassesService(
             app: app,
             delegate: delegate,
+            signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
             pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
             logger: app.logger
         )
@@ -568,7 +569,6 @@ final class PassesTests: XCTestCase {
 }
 
 final class DefaultPassesDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = ""
     func template<P: PassModel>(for pass: P, db: any Database) async throws -> String { "" }
     func encode<P: PassModel>(
         pass: P, db: any Database, encoder: JSONEncoder

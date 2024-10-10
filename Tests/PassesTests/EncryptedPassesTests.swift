@@ -21,6 +21,7 @@ final class EncryptedPassesTests: XCTestCase {
         passesService = try PassesService(
             app: app,
             delegate: delegate,
+            signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
             pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
             logger: app.logger
         )

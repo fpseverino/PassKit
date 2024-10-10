@@ -21,6 +21,7 @@ final class EncryptedOrdersTests: XCTestCase {
         ordersService = try OrdersService(
             app: app,
             delegate: delegate,
+            signingFilesDirectory: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
             pushRoutesMiddleware: SecretMiddleware(secret: "foo"),
             logger: app.logger
         )

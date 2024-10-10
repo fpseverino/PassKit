@@ -51,14 +51,6 @@ public protocol OrdersDelegate: AnyObject, Sendable {
         order: O, db: any Database, encoder: JSONEncoder
     ) async throws -> Data
 
-    /// Should return a URL path string which points to the template data for the order.
-    ///
-    /// The path should point to a directory containing the files specified by these keys:
-    /// - `wwdrCertificate`
-    /// - `pemCertificate`
-    /// - `pemPrivateKey`
-    var sslSigningFilesDirectory: String { get }
-
     /// The location of the `openssl` command as a file URL.
     ///
     /// > Important: Be sure to use the `URL(fileURLWithPath:)` constructor.
