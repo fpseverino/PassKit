@@ -11,6 +11,9 @@ import FluentKit
 public protocol OrderDataModel: Model {
     associatedtype OrderType: OrderModel
 
+    /// An identifier for the order type associated with the order.
+    static var typeIdentifier: String { get }
+
     /// The foreign key to the order table.
     var order: OrderType { get set }
 }

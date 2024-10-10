@@ -9,14 +9,15 @@ import FluentKit
 import Vapor
 
 /// The main class that handles Wallet orders.
-public final class OrdersService: Sendable {
-    private let service: OrdersServiceCustom<Order, OrdersDevice, OrdersRegistration, OrdersErrorLog>
+public final class OrdersService<OD: OrderDataModel>: Sendable where OD.OrderType == Order {
+    private let service: OrdersServiceCustom<OD, Order, OrdersDevice, OrdersRegistration, OrdersErrorLog>
 
     /// Initializes the service and registers all the routes required for Apple Wallet to work.
     ///
     /// - Parameters:
     ///   - app: The `Vapor.Application` to use in route handlers and APNs.
     ///   - delegate: The ``OrdersDelegate`` to use for order generation.
+    ///   - dbID: The `DatabaseID` on which to register the middleware.
     ///   - signingFilesDirectory: A URL path string which points to the WWDR certificate and the PEM certificate and private key.
     ///   - wwdrCertificate: The name of Apple's WWDR.pem certificate as contained in `signingFilesDirectory` path.
     ///   - pemCertificate: The name of the PEM Certificate for signing orders as contained in `signingFilesDirectory` path.
@@ -28,6 +29,7 @@ public final class OrdersService: Sendable {
     public init(
         app: Application,
         delegate: any OrdersDelegate,
+        dbID: DatabaseID,
         signingFilesDirectory: String,
         wwdrCertificate: String = "WWDR.pem",
         pemCertificate: String = "certificate.pem",
@@ -40,6 +42,7 @@ public final class OrdersService: Sendable {
         service = try .init(
             app: app,
             delegate: delegate,
+            dbID: dbID,
             signingFilesDirectory: signingFilesDirectory,
             wwdrCertificate: wwdrCertificate,
             pemCertificate: pemCertificate,
@@ -69,16 +72,6 @@ public final class OrdersService: Sendable {
         migrations.add(OrdersDevice())
         migrations.add(OrdersRegistration())
         migrations.add(OrdersErrorLog())
-    }
-
-    /// Sends push notifications for a given order.
-    ///
-    /// - Parameters:
-    ///   - id: The `UUID` of the order to send the notifications for.
-    ///   - orderTypeIdentifier: The type identifier of the order.
-    ///   - db: The `Database` to use.
-    public func sendPushNotificationsForOrder(id: UUID, of orderTypeIdentifier: String, on db: any Database) async throws {
-        try await service.sendPushNotificationsForOrder(id: id, of: orderTypeIdentifier, on: db)
     }
 
     /// Sends push notifications for a given order.

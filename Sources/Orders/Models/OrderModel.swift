@@ -13,7 +13,7 @@ import Foundation
 /// Uses a UUID so people can't easily guess order IDs.
 public protocol OrderModel: Model where IDValue == UUID {
     /// An identifier for the order type associated with the order.
-    var orderTypeIdentifier: String { get set }
+    var typeIdentifier: String { get set }
 
     /// The date and time when the customer created the order.
     var createdAt: Date? { get set }
@@ -23,6 +23,12 @@ public protocol OrderModel: Model where IDValue == UUID {
 
     /// The authentication token supplied to your web service.
     var authenticationToken: String { get set }
+
+    /// The designated initializer.
+    /// - Parameters:
+    ///   - typeIdentifier: An identifier for the order type associated with the order.
+    ///   - authenticationToken: The authentication token to use with the web service in the `webServiceURL` key.
+    init(typeIdentifier: String, authenticationToken: String)
 }
 
 extension OrderModel {
@@ -36,14 +42,14 @@ extension OrderModel {
         return id
     }
 
-    var _$orderTypeIdentifier: Field<String> {
-        guard let mirror = Mirror(reflecting: self).descendant("_orderTypeIdentifier"),
-            let orderTypeIdentifier = mirror as? Field<String>
+    var _$typeIdentifier: Field<String> {
+        guard let mirror = Mirror(reflecting: self).descendant("_typeIdentifier"),
+            let typeIdentifier = mirror as? Field<String>
         else {
-            fatalError("orderTypeIdentifier property must be declared using @Field")
+            fatalError("typeIdentifier property must be declared using @Field")
         }
 
-        return orderTypeIdentifier
+        return typeIdentifier
     }
 
     var _$updatedAt: Timestamp<DefaultTimestampFormat> {

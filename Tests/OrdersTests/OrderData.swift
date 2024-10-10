@@ -7,6 +7,8 @@ import struct Foundation.UUID
 final class OrderData: OrderDataModel, @unchecked Sendable {
     static let schema = OrderData.FieldKeys.schemaName
 
+    static let typeIdentifier = "order.com.example.pet-store"
+
     @ID(key: .id)
     var id: UUID?
 
@@ -48,7 +50,7 @@ extension OrderData {
 
 struct OrderJSONData: OrderJSON.Properties {
     let schemaVersion = OrderJSON.SchemaVersion.v1
-    let orderTypeIdentifier = "order.com.example.pet-store"
+    let orderTypeIdentifier = OrderData.typeIdentifier
     let orderIdentifier: String
     let orderType = OrderJSON.OrderType.ecommerce
     let orderNumber = "HM090772020864"
@@ -76,34 +78,5 @@ struct OrderJSONData: OrderJSON.Properties {
         dateFormatter.formatOptions = .withInternetDateTime
         self.createdAt = dateFormatter.string(from: order.createdAt!)
         self.updatedAt = dateFormatter.string(from: order.updatedAt!)
-    }
-}
-
-struct OrderDataMiddleware: AsyncModelMiddleware {
-    private unowned let service: OrdersService
-
-    init(service: OrdersService) {
-        self.service = service
-    }
-
-    func create(
-        model: OrderData, on db: any Database, next: any AnyAsyncModelResponder
-    ) async throws {
-        let order = Order(
-            orderTypeIdentifier: "order.com.example.pet-store",
-            authenticationToken: Data([UInt8].random(count: 12)).base64EncodedString())
-        try await order.save(on: db)
-        model.$order.id = try order.requireID()
-        try await next.create(model, on: db)
-    }
-
-    func update(
-        model: OrderData, on db: any Database, next: any AnyAsyncModelResponder
-    ) async throws {
-        let order = try await model.$order.get(on: db)
-        order.updatedAt = Date()
-        try await order.save(on: db)
-        try await next.update(model, on: db)
-        try await service.sendPushNotifications(for: order, on: db)
     }
 }

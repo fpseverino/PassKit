@@ -122,7 +122,7 @@ import Orders
 
 final class OrderDelegate: OrdersDelegate {
     func encode<O: OrderModel>(order: O, db: Database, encoder: JSONEncoder) async throws -> Data {
-        // The specific OrderData class you use here may vary based on the `order.orderTypeIdentifier`
+        // The specific OrderData class you use here may vary based on the `order.typeIdentifier`
         // if you have multiple different types of orders, and thus multiple types of order data.
         guard let orderData = try await OrderData.query(on: db)
             .filter(\.$order.$id == order.requireID())
@@ -220,52 +220,6 @@ OrdersService.register(migrations: app.migrations)
 ```
 
 > Important: Register the default models before the migration of your order data model.
-
-### Order Data Model Middleware
-
-You'll want to create a model middleware to handle the creation and update of the order data model.
-This middleware could be responsible for creating and linking an ``Order`` to the order data model, depending on your requirements.
-When your order data changes, it should also update the ``Order/updatedAt`` field of the ``Order`` and send a push notification to all devices registered to that order.
-
-```swift
-import Vapor
-import Fluent
-import Orders
-
-struct OrderDataMiddleware: AsyncModelMiddleware {
-    private unowned let service: OrdersService
-
-    init(service: OrdersService) {
-        self.service = service
-    }
-
-    // Create the `Order` and add it to the `OrderData` automatically at creation
-    func create(model: OrderData, on db: Database, next: AnyAsyncModelResponder) async throws {
-        let order = Order(
-            orderTypeIdentifier: Environment.get("ORDER_TYPE_IDENTIFIER")!,
-            authenticationToken: Data([UInt8].random(count: 12)).base64EncodedString())
-        try await order.save(on: db)
-        model.$order.id = try order.requireID()
-        try await next.create(model, on: db)
-    }
-
-    func update(model: OrderData, on db: Database, next: AnyAsyncModelResponder) async throws {
-        let order = try await model.$order.get(on: db)
-        order.updatedAt = Date()
-        try await order.save(on: db)
-        try await next.update(model, on: db)
-        try await service.sendPushNotifications(for: order, on: db)
-    }
-}
-```
-
-You could register it in the `configure.swift` file.
-
-```swift
-app.databases.middleware.use(OrderDataMiddleware(service: ordersService), on: .psql)
-```
-
-> Important: Whenever your order data changes, you must update the ``Order/updatedAt`` time of the linked ``Order`` so that Wallet knows to retrieve a new order.
 
 ### Generate the Order Content
 

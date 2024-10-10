@@ -43,14 +43,14 @@ struct EncryptedOrdersTests {
             try await orderData.create(on: app.db)
             let order = try await orderData._$order.get(on: app.db)
 
-            try await ordersService.sendPushNotificationsForOrder(id: order.requireID(), of: order.orderTypeIdentifier, on: app.db)
+            try await ordersService.sendPushNotifications(for: order, on: app.db)
 
             let deviceLibraryIdentifier = "abcdefg"
             let pushToken = "1234567890"
 
             try await app.test(
                 .POST,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
@@ -59,7 +59,7 @@ struct EncryptedOrdersTests {
 
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -71,7 +71,7 @@ struct EncryptedOrdersTests {
 
             try await app.test(
                 .POST,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .internalServerError)

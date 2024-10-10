@@ -45,7 +45,7 @@ struct OrdersTests {
 
             try await app.test(
                 .GET,
-                "\(ordersURI)orders/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)orders/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: [
                     "Authorization": "AppleOrder \(order.authenticationToken)",
                     "If-Modified-Since": "0",
@@ -61,7 +61,7 @@ struct OrdersTests {
             // Test call with invalid authentication token
             try await app.test(
                 .GET,
-                "\(ordersURI)orders/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)orders/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: [
                     "Authorization": "AppleOrder invalidToken",
                     "If-Modified-Since": "0",
@@ -74,7 +74,7 @@ struct OrdersTests {
             // Test distant future `If-Modified-Since` date
             try await app.test(
                 .GET,
-                "\(ordersURI)orders/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)orders/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: [
                     "Authorization": "AppleOrder \(order.authenticationToken)",
                     "If-Modified-Since": "2147483647",
@@ -87,7 +87,7 @@ struct OrdersTests {
             // Test call with invalid order ID
             try await app.test(
                 .GET,
-                "\(ordersURI)orders/\(order.orderTypeIdentifier)/invalidID",
+                "\(ordersURI)orders/\(OrderData.typeIdentifier)/invalidID",
                 headers: [
                     "Authorization": "AppleOrder \(order.authenticationToken)",
                     "If-Modified-Since": "0",
@@ -122,7 +122,7 @@ struct OrdersTests {
 
             try await app.test(
                 .GET,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)?ordersModifiedSince=0",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)?ordersModifiedSince=0",
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
                 }
@@ -130,7 +130,7 @@ struct OrdersTests {
 
             try await app.test(
                 .DELETE,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .notFound)
@@ -140,7 +140,7 @@ struct OrdersTests {
             // Test registration without authentication token
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
                 },
@@ -165,7 +165,7 @@ struct OrdersTests {
             // Test call without DTO
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -175,7 +175,7 @@ struct OrdersTests {
             // Test call with invalid UUID
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\("not-a-uuid")",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -187,7 +187,7 @@ struct OrdersTests {
 
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -200,7 +200,7 @@ struct OrdersTests {
             // Test registration of an already registered device
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -212,7 +212,7 @@ struct OrdersTests {
 
             try await app.test(
                 .GET,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)?ordersModifiedSince=0",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)?ordersModifiedSince=0",
                 afterResponse: { res async throws in
                     let orders = try res.content.decode(OrdersForDeviceDTO.self)
                     #expect(orders.orderIdentifiers.count == 1)
@@ -224,7 +224,7 @@ struct OrdersTests {
 
             try await app.test(
                 .GET,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     let pushTokens = try res.content.decode([String].self)
@@ -236,7 +236,7 @@ struct OrdersTests {
             // Test call with invalid UUID
             try await app.test(
                 .GET,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\("not-a-uuid")",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -246,7 +246,7 @@ struct OrdersTests {
             // Test call with invalid UUID
             try await app.test(
                 .DELETE,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\("not-a-uuid")",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
@@ -255,7 +255,7 @@ struct OrdersTests {
 
             try await app.test(
                 .DELETE,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 afterResponse: { res async throws in
                     #expect(res.status == .ok)
@@ -316,14 +316,14 @@ struct OrdersTests {
             try await orderData.create(on: app.db)
             let order = try await orderData._$order.get(on: app.db)
 
-            try await ordersService.sendPushNotificationsForOrder(id: order.requireID(), of: order.orderTypeIdentifier, on: app.db)
+            try await ordersService.sendPushNotifications(for: order, on: app.db)
 
             let deviceLibraryIdentifier = "abcdefg"
             let pushToken = "1234567890"
 
             try await app.test(
                 .POST,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .noContent)
@@ -332,7 +332,7 @@ struct OrdersTests {
 
             try await app.test(
                 .POST,
-                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)devices/\(deviceLibraryIdentifier)/registrations/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["Authorization": "AppleOrder \(order.authenticationToken)"],
                 beforeRequest: { req async throws in
                     try req.content.encode(RegistrationDTO(pushToken: pushToken))
@@ -344,7 +344,7 @@ struct OrdersTests {
 
             try await app.test(
                 .POST,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\(order.requireID())",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\(order.requireID())",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .internalServerError)
@@ -354,7 +354,7 @@ struct OrdersTests {
             // Test call with invalid UUID
             try await app.test(
                 .POST,
-                "\(ordersURI)push/\(order.orderTypeIdentifier)/\("not-a-uuid")",
+                "\(ordersURI)push/\(OrderData.typeIdentifier)/\("not-a-uuid")",
                 headers: ["X-Secret": "foo"],
                 afterResponse: { res async throws in
                     #expect(res.status == .badRequest)
