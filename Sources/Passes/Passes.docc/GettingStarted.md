@@ -151,7 +151,7 @@ import Fluent
 import Passes
 
 final class PassDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = URL(fileURLWithPath: "Certificates/Passes/", isDirectory: true)
+    let sslSigningFilesDirectory = "Certificates/Passes/"
 
     let pemPrivateKeyPassword: String? = Environment.get("PASSES_PEM_PRIVATE_KEY_PASSWORD")!
 
@@ -170,9 +170,9 @@ final class PassDelegate: PassesDelegate {
         return data
     }
 
-    func template<P: PassModel>(for pass: P, db: Database) async throws -> URL {
+    func template<P: PassModel>(for pass: P, db: Database) async throws -> String {
         // The location might vary depending on the type of pass.
-        URL(fileURLWithPath: "Templates/Passes/", isDirectory: true)
+        "Templates/Passes/"
     }
 }
 ```

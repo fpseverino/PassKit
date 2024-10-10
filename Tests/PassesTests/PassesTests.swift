@@ -568,10 +568,8 @@ final class PassesTests: XCTestCase {
 }
 
 final class DefaultPassesDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = URL(fileURLWithPath: "", isDirectory: true)
-    func template<P: PassModel>(for pass: P, db: any Database) async throws -> URL {
-        URL(fileURLWithPath: "")
-    }
+    let sslSigningFilesDirectory = ""
+    func template<P: PassModel>(for pass: P, db: any Database) async throws -> String { "" }
     func encode<P: PassModel>(
         pass: P, db: any Database, encoder: JSONEncoder
     ) async throws -> Data {

@@ -30,6 +30,7 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     private unowned let app: Application
     private unowned let delegate: any PassesDelegate
     private let logger: Logger?
+    private let sslSigningFilesDirectory: URL
     private let encoder = JSONEncoder()
 
     /// Initializes the service and registers all the routes required for PassKit to work.
@@ -48,16 +49,13 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
         self.app = app
         self.delegate = delegate
         self.logger = logger
+        self.sslSigningFilesDirectory = URL(fileURLWithPath: delegate.sslSigningFilesDirectory, isDirectory: true)
 
-        let privateKeyPath = URL(
-            fileURLWithPath: delegate.pemPrivateKey, relativeTo: delegate.sslSigningFilesDirectory
-        ).path
+        let privateKeyPath = URL(fileURLWithPath: delegate.pemPrivateKey, relativeTo: self.sslSigningFilesDirectory).path
         guard FileManager.default.fileExists(atPath: privateKeyPath) else {
             throw PassesError.pemPrivateKeyMissing
         }
-        let pemPath = URL(
-            fileURLWithPath: delegate.pemCertificate, relativeTo: delegate.sslSigningFilesDirectory
-        ).path
+        let pemPath = URL(fileURLWithPath: delegate.pemCertificate, relativeTo: self.sslSigningFilesDirectory).path
         guard FileManager.default.fileExists(atPath: pemPath) else {
             throw PassesError.pemCertificateMissing
         }
@@ -349,7 +347,7 @@ extension PassesServiceCustom {
             try token.write(to: tokenURL)
 
             let proc = Process()
-            proc.currentDirectoryURL = delegate.sslSigningFilesDirectory
+            proc.currentDirectoryURL = self.sslSigningFilesDirectory
             proc.executableURL = sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
@@ -371,20 +369,20 @@ extension PassesServiceCustom {
                 additionalIntermediateCertificates: [
                     Certificate(
                         pemEncoded: String(
-                            contentsOf: delegate.sslSigningFilesDirectory
+                            contentsOf: self.sslSigningFilesDirectory
                                 .appendingPathComponent(delegate.wwdrCertificate)
                         )
                     )
                 ],
                 certificate: Certificate(
                     pemEncoded: String(
-                        contentsOf: delegate.sslSigningFilesDirectory
+                        contentsOf: self.sslSigningFilesDirectory
                             .appendingPathComponent(delegate.pemCertificate)
                     )
                 ),
                 privateKey: .init(
                     pemEncoded: String(
-                        contentsOf: delegate.sslSigningFilesDirectory
+                        contentsOf: self.sslSigningFilesDirectory
                             .appendingPathComponent(delegate.pemPrivateKey)
                     )
                 ),
@@ -513,7 +511,7 @@ extension PassesServiceCustom {
             }
 
             let proc = Process()
-            proc.currentDirectoryURL = delegate.sslSigningFilesDirectory
+            proc.currentDirectoryURL = self.sslSigningFilesDirectory
             proc.executableURL = sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
@@ -536,20 +534,20 @@ extension PassesServiceCustom {
             additionalIntermediateCertificates: [
                 Certificate(
                     pemEncoded: String(
-                        contentsOf: delegate.sslSigningFilesDirectory
+                        contentsOf: self.sslSigningFilesDirectory
                             .appendingPathComponent(delegate.wwdrCertificate)
                     )
                 )
             ],
             certificate: Certificate(
                 pemEncoded: String(
-                    contentsOf: delegate.sslSigningFilesDirectory
+                    contentsOf: self.sslSigningFilesDirectory
                         .appendingPathComponent(delegate.pemCertificate)
                 )
             ),
             privateKey: .init(
                 pemEncoded: String(
-                    contentsOf: delegate.sslSigningFilesDirectory
+                    contentsOf: self.sslSigningFilesDirectory
                         .appendingPathComponent(delegate.pemPrivateKey)
                 )
             ),
@@ -565,7 +563,7 @@ extension PassesServiceCustom {
     ///   - db: The `Database` to use.
     /// - Returns: The generated pass content as `Data`.
     public func generatePassContent(for pass: P, on db: any Database) async throws -> Data {
-        let templateDirectory = try await delegate.template(for: pass, db: db)
+        let templateDirectory = URL(fileURLWithPath: try await delegate.template(for: pass, db: db), isDirectory: true)
         guard
             (try? templateDirectory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
         else {

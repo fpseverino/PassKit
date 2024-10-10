@@ -3,10 +3,7 @@ import Orders
 import Vapor
 
 final class EncryptedOrdersDelegate: OrdersDelegate {
-    let sslSigningFilesDirectory = URL(
-        fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
-        isDirectory: true
-    )
+    let sslSigningFilesDirectory = "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/"
 
     let pemCertificate = "encryptedcert.pem"
     let pemPrivateKey = "encryptedkey.pem"
@@ -31,11 +28,7 @@ final class EncryptedOrdersDelegate: OrdersDelegate {
         return data
     }
 
-    func template<O: OrderModel>(for: O, db: any Database) async throws -> URL {
-        URL(
-            fileURLWithPath:
-                "\(FileManager.default.currentDirectoryPath)/Tests/OrdersTests/Templates/",
-            isDirectory: true
-        )
+    func template<O: OrderModel>(for: O, db: any Database) async throws -> String {
+        "\(FileManager.default.currentDirectoryPath)/Tests/OrdersTests/Templates/"
     }
 }

@@ -24,7 +24,7 @@ You'll have to make a few changes to ``PassesDelegate`` to support personalizabl
 Implement the ``PassesDelegate/encodePersonalization(for:db:encoder:)`` method, which gives you the ``Pass`` to encode.
 If the pass requires personalization, and if it was not already personalized, create a ``PersonalizationJSON`` and return it, otherwise return `nil`.
 
-In the ``PassesDelegate/template(for:db:)`` method, you have to return two different directory URLs, depending on whether the pass has to be personalized or not. If it does, the directory must contain the `personalizationLogo@XX.png` file.
+In the ``PassesDelegate/template(for:db:)`` method, you have to return two different directory paths, depending on whether the pass has to be personalized or not. If it does, the directory must contain the `personalizationLogo@XX.png` file.
 
 Finally, you have to implement the ``PassesDelegate/encode(pass:db:encoder:)`` method as usual, but remember to use in the ``PassJSON`` initializer the user info that will be saved inside ``Pass/userPersonalization`` after the pass has been personalized.
 
@@ -34,7 +34,7 @@ import Fluent
 import Passes
 
 final class PassDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = URL(fileURLWithPath: "Certificates/Passes/", isDirectory: true)
+    let sslSigningFilesDirectory = "Certificates/Passes/"
 
     let pemPrivateKeyPassword: String? = Environment.get("PASSES_PEM_PRIVATE_KEY_PASSWORD")!
 
@@ -73,7 +73,7 @@ final class PassDelegate: PassesDelegate {
         }
     }
 
-    func template<P: PassModel>(for pass: P, db: Database) async throws -> URL {
+    func template<P: PassModel>(for pass: P, db: Database) async throws -> String {
         guard let passData = try await PassData.query(on: db)
             .filter(\.$pass.$id == pass.requireID())
             .first()
@@ -82,12 +82,12 @@ final class PassDelegate: PassesDelegate {
         }
 
         if passData.requiresPersonalization {
-            // If the pass requires personalization, return the URL to the personalization template,
+            // If the pass requires personalization, return the path to the personalization template,
             // which must contain the `personalizationLogo@XX.png` file.
-            return URL(fileURLWithPath: "Templates/Passes/Personalization/", isDirectory: true)
+            return "Templates/Passes/Personalization/"
         } else {
-            // Otherwise, return the URL to the standard pass template.
-            return URL(fileURLWithPath: "Templates/Passes/Standard/", isDirectory: true)
+            // Otherwise, return the path to the standard pass template.
+            return "Templates/Passes/Standard/"
         }
     }
 }

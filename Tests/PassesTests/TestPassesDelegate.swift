@@ -3,10 +3,7 @@ import Passes
 import Vapor
 
 final class TestPassesDelegate: PassesDelegate {
-    let sslSigningFilesDirectory = URL(
-        fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/",
-        isDirectory: true
-    )
+    let sslSigningFilesDirectory = "\(FileManager.default.currentDirectoryPath)/Tests/Certificates/"
 
     let pemCertificate = "certificate.pem"
     let pemPrivateKey = "key.pem"
@@ -48,7 +45,7 @@ final class TestPassesDelegate: PassesDelegate {
         }
     }
 
-    func template<P: PassModel>(for pass: P, db: any Database) async throws -> URL {
-        URL(fileURLWithPath: "\(FileManager.default.currentDirectoryPath)/Tests/PassesTests/Templates/", isDirectory: true)
+    func template<P: PassModel>(for pass: P, db: any Database) async throws -> String {
+        "\(FileManager.default.currentDirectoryPath)/Tests/PassesTests/Templates/"
     }
 }

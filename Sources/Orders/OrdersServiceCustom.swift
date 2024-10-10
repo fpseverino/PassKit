@@ -27,6 +27,8 @@ where O == R.OrderType, D == R.DeviceType {
     private unowned let app: Application
     private unowned let delegate: any OrdersDelegate
     private let logger: Logger?
+    private let sslSigningFilesDirectory: URL
+    private let encoder = JSONEncoder()
 
     /// Initializes the service and registers all the routes required for Apple Wallet to work.
     ///
@@ -44,15 +46,16 @@ where O == R.OrderType, D == R.DeviceType {
         self.app = app
         self.delegate = delegate
         self.logger = logger
+        self.sslSigningFilesDirectory = URL(fileURLWithPath: delegate.sslSigningFilesDirectory, isDirectory: true)
 
         let privateKeyPath = URL(
-            fileURLWithPath: delegate.pemPrivateKey, relativeTo: delegate.sslSigningFilesDirectory
+            fileURLWithPath: delegate.pemPrivateKey, relativeTo: self.sslSigningFilesDirectory
         ).path
         guard FileManager.default.fileExists(atPath: privateKeyPath) else {
             throw OrdersError.pemPrivateKeyMissing
         }
         let pemPath = URL(
-            fileURLWithPath: delegate.pemCertificate, relativeTo: delegate.sslSigningFilesDirectory
+            fileURLWithPath: delegate.pemCertificate, relativeTo: self.sslSigningFilesDirectory
         ).path
         guard FileManager.default.fileExists(atPath: pemPath) else {
             throw OrdersError.pemCertificateMissing
@@ -86,7 +89,7 @@ where O == R.OrderType, D == R.DeviceType {
             apnsConfig,
             eventLoopGroupProvider: .shared(app.eventLoopGroup),
             responseDecoder: JSONDecoder(),
-            requestEncoder: JSONEncoder(),
+            requestEncoder: self.encoder,
             as: .init(string: "orders"),
             isDefault: false
         )
@@ -402,7 +405,7 @@ extension OrdersServiceCustom {
             }
 
             let proc = Process()
-            proc.currentDirectoryURL = delegate.sslSigningFilesDirectory
+            proc.currentDirectoryURL = self.sslSigningFilesDirectory
             proc.executableURL = sslBinary
             proc.arguments = [
                 "smime", "-binary", "-sign",
@@ -425,20 +428,20 @@ extension OrdersServiceCustom {
             additionalIntermediateCertificates: [
                 Certificate(
                     pemEncoded: String(
-                        contentsOf: delegate.sslSigningFilesDirectory
+                        contentsOf: self.sslSigningFilesDirectory
                             .appendingPathComponent(delegate.wwdrCertificate)
                     )
                 )
             ],
             certificate: Certificate(
                 pemEncoded: String(
-                    contentsOf: delegate.sslSigningFilesDirectory
+                    contentsOf: self.sslSigningFilesDirectory
                         .appendingPathComponent(delegate.pemCertificate)
                 )
             ),
             privateKey: .init(
                 pemEncoded: String(
-                    contentsOf: delegate.sslSigningFilesDirectory
+                    contentsOf: self.sslSigningFilesDirectory
                         .appendingPathComponent(delegate.pemPrivateKey)
                 )
             ),
@@ -454,7 +457,7 @@ extension OrdersServiceCustom {
     ///   - db: The `Database` to use.
     /// - Returns: The generated order content as `Data`.
     public func generateOrderContent(for order: O, on db: any Database) async throws -> Data {
-        let templateDirectory = try await delegate.template(for: order, db: db)
+        let templateDirectory = URL(fileURLWithPath: try await delegate.template(for: order, db: db), isDirectory: true)
         guard
             (try? templateDirectory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
         else {
@@ -466,12 +469,10 @@ extension OrdersServiceCustom {
         try FileManager.default.copyItem(at: templateDirectory, to: root)
         defer { _ = try? FileManager.default.removeItem(at: root) }
 
-        let encoder = JSONEncoder()
-        try await self.delegate.encode(order: order, db: db, encoder: encoder)
-            .write(to: root.appendingPathComponent("order.json"))
+        try await self.delegate.encode(order: order, db: db, encoder: self.encoder).write(to: root.appendingPathComponent("order.json"))
 
         try self.generateSignatureFile(
-            for: Self.generateManifestFile(using: encoder, in: root),
+            for: Self.generateManifestFile(using: self.encoder, in: root),
             in: root
         )
 

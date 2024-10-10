@@ -420,10 +420,8 @@ final class OrdersTests: XCTestCase {
 }
 
 final class DefaultOrdersDelegate: OrdersDelegate {
-    let sslSigningFilesDirectory = URL(fileURLWithPath: "", isDirectory: true)
-    func template<O: OrderModel>(for order: O, db: any Database) async throws -> URL {
-        URL(fileURLWithPath: "")
-    }
+    let sslSigningFilesDirectory = ""
+    func template<O: OrderModel>(for order: O, db: any Database) async throws -> String { "" }
     func encode<O: OrderModel>(
         order: O, db: any Database, encoder: JSONEncoder
     ) async throws -> Data {
