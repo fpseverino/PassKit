@@ -58,7 +58,7 @@ public final class PassesService: Sendable {
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
-        service = try .init(
+        self.service = try .init(
             app: app,
             delegate: delegate,
             signingFilesDirectory: signingFilesDirectory,
@@ -92,8 +92,7 @@ public final class PassesService: Sendable {
     ///   - passes: The passes to include in the bundle.
     ///   - db: The `Database` to use.
     /// - Returns: The bundle of passes as `Data`.
-    public func generatePassesContent(for passes: [Pass], on db: any Database) async throws -> Data
-    {
+    public func generatePassesContent(for passes: [Pass], on db: any Database) async throws -> Data {
         try await service.generatePassesContent(for: passes, on: db)
     }
 
@@ -114,9 +113,7 @@ public final class PassesService: Sendable {
     ///   - id: The `UUID` of the pass to send the notifications for.
     ///   - passTypeIdentifier: The type identifier of the pass.
     ///   - db: The `Database` to use.
-    public func sendPushNotificationsForPass(
-        id: UUID, of passTypeIdentifier: String, on db: any Database
-    ) async throws {
+    public func sendPushNotificationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws {
         try await service.sendPushNotificationsForPass(id: id, of: passTypeIdentifier, on: db)
     }
 

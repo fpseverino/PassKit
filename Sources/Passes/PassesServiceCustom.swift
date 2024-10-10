@@ -23,9 +23,7 @@ import Zip
 /// - Device Type
 /// - Registration Type
 /// - Error Log Type
-public final class PassesServiceCustom<
-    P, U, D, R: PassesRegistrationModel, E: ErrorLogModel
->: Sendable
+public final class PassesServiceCustom<P, U, D, R: PassesRegistrationModel, E: ErrorLogModel>: Sendable
 where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
     private unowned let app: Application
     private unowned let delegate: any PassesDelegate
@@ -118,31 +116,29 @@ where P == R.PassType, D == R.DeviceType, U == P.UserPersonalizationType {
         let v1 = app.grouped("api", "passes", "v1")
         v1.get(
             "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
-            use: { try await self.passesForDevice(req: $0) })
+            use: { try await self.passesForDevice(req: $0) }
+        )
         v1.post("log", use: { try await self.logError(req: $0) })
         v1.post(
             "passes", ":passTypeIdentifier", ":passSerial", "personalize",
-            use: { try await self.personalizedPass(req: $0) })
+            use: { try await self.personalizedPass(req: $0) }
+        )
 
         let v1auth = v1.grouped(ApplePassMiddleware<P>())
         v1auth.post(
             "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
-            ":passSerial", use: { try await self.registerDevice(req: $0) })
-        v1auth.get(
-            "passes", ":passTypeIdentifier", ":passSerial",
-            use: { try await self.latestVersionOfPass(req: $0) })
+            ":passSerial", use: { try await self.registerDevice(req: $0) }
+        )
+        v1auth.get("passes", ":passTypeIdentifier", ":passSerial", use: { try await self.latestVersionOfPass(req: $0) })
         v1auth.delete(
             "devices", ":deviceLibraryIdentifier", "registrations", ":passTypeIdentifier",
-            ":passSerial", use: { try await self.unregisterDevice(req: $0) })
+            ":passSerial", use: { try await self.unregisterDevice(req: $0) }
+        )
 
         if let pushRoutesMiddleware {
             let pushAuth = v1.grouped(pushRoutesMiddleware)
-            pushAuth.post(
-                "push", ":passTypeIdentifier", ":passSerial",
-                use: { try await self.pushUpdatesForPass(req: $0) })
-            pushAuth.get(
-                "push", ":passTypeIdentifier", ":passSerial",
-                use: { try await self.tokensForPassUpdate(req: $0) })
+            pushAuth.post("push", ":passTypeIdentifier", ":passSerial", use: { try await self.pushUpdatesForPass(req: $0) })
+            pushAuth.get("push", ":passTypeIdentifier", ":passSerial", use: { try await self.tokensForPassUpdate(req: $0) })
         }
     }
 }
@@ -180,8 +176,7 @@ extension PassesServiceCustom {
         if let device = device {
             return try await Self.createRegistration(device: device, pass: pass, db: req.db)
         } else {
-            let newDevice = D(
-                deviceLibraryIdentifier: deviceLibraryIdentifier, pushToken: pushToken)
+            let newDevice = D(deviceLibraryIdentifier: deviceLibraryIdentifier, pushToken: pushToken)
             try await newDevice.create(on: req.db)
             return try await Self.createRegistration(device: newDevice, pass: pass, db: req.db)
         }
@@ -194,7 +189,8 @@ extension PassesServiceCustom {
     ) async throws -> HTTPStatus {
         let r = try await R.for(
             deviceLibraryIdentifier: device.deviceLibraryIdentifier,
-            passTypeIdentifier: pass.passTypeIdentifier, on: db
+            passTypeIdentifier: pass.passTypeIdentifier,
+            on: db
         )
         .filter(P.self, \._$id == pass.requireID())
         .first()
@@ -216,7 +212,9 @@ extension PassesServiceCustom {
 
         var query = R.for(
             deviceLibraryIdentifier: deviceLibraryIdentifier,
-            passTypeIdentifier: passTypeIdentifier, on: req.db)
+            passTypeIdentifier: passTypeIdentifier,
+            on: req.db
+        )
         if let since: TimeInterval = req.query["passesUpdatedSince"] {
             let when = Date(timeIntervalSince1970: since)
             query = query.filter(P.self, \._$updatedAt > when)
@@ -439,8 +437,7 @@ extension PassesServiceCustom {
         }
         let passTypeIdentifier = req.parameters.get("passTypeIdentifier")!
 
-        return try await Self.registrationsForPass(id: id, of: passTypeIdentifier, on: req.db)
-            .map { $0.device.pushToken }
+        return try await Self.registrationsForPass(id: id, of: passTypeIdentifier, on: req.db).map { $0.device.pushToken }
     }
 }
 
@@ -452,11 +449,8 @@ extension PassesServiceCustom {
     ///   - id: The `UUID` of the pass to send the notifications for.
     ///   - passTypeIdentifier: The type identifier of the pass.
     ///   - db: The `Database` to use.
-    public func sendPushNotificationsForPass(
-        id: UUID, of passTypeIdentifier: String, on db: any Database
-    ) async throws {
-        let registrations = try await Self.registrationsForPass(
-            id: id, of: passTypeIdentifier, on: db)
+    public func sendPushNotificationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws {
+        let registrations = try await Self.registrationsForPass(id: id, of: passTypeIdentifier, on: db)
         for reg in registrations {
             let backgroundNotification = APNSBackgroundNotification(
                 expiration: .immediately,
@@ -481,13 +475,10 @@ extension PassesServiceCustom {
     ///   - pass: The pass to send the notifications for.
     ///   - db: The `Database` to use.
     public func sendPushNotifications(for pass: P, on db: any Database) async throws {
-        try await sendPushNotificationsForPass(
-            id: pass.requireID(), of: pass.passTypeIdentifier, on: db)
+        try await sendPushNotificationsForPass(id: pass.requireID(), of: pass.passTypeIdentifier, on: db)
     }
 
-    static func registrationsForPass(
-        id: UUID, of passTypeIdentifier: String, on db: any Database
-    ) async throws -> [R] {
+    static func registrationsForPass(id: UUID, of passTypeIdentifier: String, on db: any Database) async throws -> [R] {
         // This could be done by enforcing the caller to have a Siblings property wrapper,
         // but there's not really any value to forcing that on them when we can just do the query ourselves like this.
         try await R.query(on: db)
@@ -503,9 +494,7 @@ extension PassesServiceCustom {
 
 // MARK: - pkpass file generation
 extension PassesServiceCustom {
-    private static func generateManifestFile(
-        using encoder: JSONEncoder, in root: URL
-    ) throws -> Data {
+    private static func generateManifestFile(using encoder: JSONEncoder, in root: URL) throws -> Data {
         var manifest: [String: String] = [:]
         let paths = try FileManager.default.subpathsOfDirectory(atPath: root.path)
         for relativePath in paths {
@@ -584,13 +573,10 @@ extension PassesServiceCustom {
     /// - Returns: The generated pass content as `Data`.
     public func generatePassContent(for pass: P, on db: any Database) async throws -> Data {
         let templateDirectory = URL(fileURLWithPath: try await delegate.template(for: pass, db: db), isDirectory: true)
-        guard
-            (try? templateDirectory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-        else {
+        guard (try? templateDirectory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false else {
             throw PassesError.templateNotDirectory
         }
-        var files = try FileManager.default.contentsOfDirectory(
-            at: templateDirectory, includingPropertiesForKeys: nil)
+        var files = try FileManager.default.contentsOfDirectory(at: templateDirectory, includingPropertiesForKeys: nil)
 
         let tmp = FileManager.default.temporaryDirectory
         let root = tmp.appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -640,8 +626,7 @@ extension PassesServiceCustom {
         var files: [URL] = []
         for (i, pass) in passes.enumerated() {
             let name = "pass\(i).pkpass"
-            try await self.generatePassContent(for: pass, on: db)
-                .write(to: root.appendingPathComponent(name))
+            try await self.generatePassContent(for: pass, on: db).write(to: root.appendingPathComponent(name))
             files.append(URL(fileURLWithPath: name, relativeTo: root))
         }
         return try Data(contentsOf: Zip.quickZipFiles(files, fileName: UUID().uuidString))

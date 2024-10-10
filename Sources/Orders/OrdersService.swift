@@ -77,9 +77,7 @@ public final class OrdersService: Sendable {
     ///   - id: The `UUID` of the order to send the notifications for.
     ///   - orderTypeIdentifier: The type identifier of the order.
     ///   - db: The `Database` to use.
-    public func sendPushNotificationsForOrder(
-        id: UUID, of orderTypeIdentifier: String, on db: any Database
-    ) async throws {
+    public func sendPushNotificationsForOrder(id: UUID, of orderTypeIdentifier: String, on db: any Database) async throws {
         try await service.sendPushNotificationsForOrder(id: id, of: orderTypeIdentifier, on: db)
     }
 
