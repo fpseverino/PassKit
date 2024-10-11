@@ -62,6 +62,12 @@ where OD.OrderType == O, O == R.OrderType, D == R.DeviceType {
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
+        app.migrations.add(O())
+        app.migrations.add(D())
+        app.migrations.add(R())
+        app.migrations.add(E())
+        app.migrations.add(OD())
+
         self.app = app
         self.delegate = delegate
         self.logger = logger

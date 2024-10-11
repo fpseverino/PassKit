@@ -6,7 +6,6 @@
 
 - ``generatePassContent(for:on:)``
 - ``generatePassesContent(for:on:)``
-- ``register(migrations:)``
 
 ### Push Notifications
 

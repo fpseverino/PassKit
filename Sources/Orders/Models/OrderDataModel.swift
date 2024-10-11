@@ -8,7 +8,7 @@
 import FluentKit
 
 /// Represents the `Model` that stores custom app data associated to Wallet orders.
-public protocol OrderDataModel: Model {
+public protocol OrderDataModel: Model, AsyncMigration {
     associatedtype OrderType: OrderModel
 
     /// An identifier for the order type associated with the order.

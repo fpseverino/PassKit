@@ -26,7 +26,7 @@ final class PassData: PassDataModel, @unchecked Sendable {
     }
 }
 
-struct CreatePassData: AsyncMigration {
+extension PassData: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(PassData.FieldKeys.schemaName)
             .id()

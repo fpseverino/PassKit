@@ -32,7 +32,7 @@ import Foundation
 /// Represents the `Model` that stores PassKit passes.
 ///
 /// Uses a UUID so people can't easily guess pass serial numbers.
-public protocol PassModel: Model where IDValue == UUID {
+public protocol PassModel: Model, AsyncMigration where IDValue == UUID {
     associatedtype UserPersonalizationType: UserPersonalizationModel
 
     /// The pass type identifier that’s registered with Apple.

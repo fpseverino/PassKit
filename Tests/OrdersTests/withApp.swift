@@ -15,8 +15,6 @@ func withApp(
     try #require(isLoggingConfigured)
 
     app.databases.use(.sqlite(.memory), as: .sqlite)
-    OrdersService<OrderData>.register(migrations: app.migrations)
-    app.migrations.add(CreateOrderData())
     let ordersService = try OrdersService<OrderData>(
         app: app,
         delegate: delegate,

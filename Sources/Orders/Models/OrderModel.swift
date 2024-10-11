@@ -11,7 +11,7 @@ import Foundation
 /// Represents the `Model` that stores Waller orders.
 ///
 /// Uses a UUID so people can't easily guess order IDs.
-public protocol OrderModel: Model where IDValue == UUID {
+public protocol OrderModel: Model, AsyncMigration where IDValue == UUID {
     /// An identifier for the order type associated with the order.
     var typeIdentifier: String { get set }
 

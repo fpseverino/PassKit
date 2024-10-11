@@ -42,7 +42,7 @@ final class PassData: PassDataModel, @unchecked Sendable {
     init() { }
 }
 
-struct CreatePassData: AsyncMigration {
+extension PassData: AsyncMigration {
     public func prepare(on database: Database) async throws {
         try await database.schema(PassData.schema)
             .id()
@@ -236,16 +236,6 @@ public func configure(_ app: Application) async throws {
     )
 }
 ```
-
-### Register Migrations
-
-If you're using the default schemas provided by this framework, you can register the default models in your `configure(_:)` method:
-
-```swift
-PassesService<PassData>.register(migrations: app.migrations)
-```
-
-> Important: Register the default models before the migration of your pass data model.
 
 ### Generate the Pass Content
 

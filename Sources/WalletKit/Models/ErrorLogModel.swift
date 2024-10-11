@@ -29,7 +29,7 @@
 import FluentKit
 
 /// Represents the `Model` that stores PassKit error logs.
-public protocol ErrorLogModel: Model {
+public protocol ErrorLogModel: Model, AsyncMigration {
     /// The error message provided by PassKit.
     var message: String { get set }
 

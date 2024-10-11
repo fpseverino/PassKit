@@ -39,7 +39,7 @@ public final class OrdersService<OD: OrderDataModel>: Sendable where OD.OrderTyp
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
-        service = try .init(
+        self.service = try .init(
             app: app,
             delegate: delegate,
             dbID: dbID,
@@ -62,16 +62,6 @@ public final class OrdersService<OD: OrderDataModel>: Sendable where OD.OrderTyp
     /// - Returns: The generated order content.
     public func generateOrderContent(for order: Order, on db: any Database) async throws -> Data {
         try await service.generateOrderContent(for: order, on: db)
-    }
-
-    /// Adds the migrations for Wallet orders models.
-    ///
-    /// - Parameter migrations: The `Migrations` object to add the migrations to.
-    public static func register(migrations: Migrations) {
-        migrations.add(Order())
-        migrations.add(OrdersDevice())
-        migrations.add(OrdersRegistration())
-        migrations.add(OrdersErrorLog())
     }
 
     /// Sends push notifications for a given order.

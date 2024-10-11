@@ -63,6 +63,13 @@ where PD.PassType == P, P == R.PassType, D == R.DeviceType, U == P.UserPersonali
         pushRoutesMiddleware: (any Middleware)? = nil,
         logger: Logger? = nil
     ) throws {
+        app.migrations.add(U())
+        app.migrations.add(P())
+        app.migrations.add(D())
+        app.migrations.add(R())
+        app.migrations.add(E())
+        app.migrations.add(PD())
+
         self.app = app
         self.delegate = delegate
         self.logger = logger

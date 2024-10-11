@@ -39,7 +39,7 @@ final class OrderData: OrderDataModel, @unchecked Sendable {
     init() { }
 }
 
-struct CreateOrderData: AsyncMigration {
+extension OrderData: AsyncMigration {
     public func prepare(on database: Database) async throws {
         try await database.schema(OrderData.schema)
             .id()
@@ -211,16 +211,6 @@ public func configure(_ app: Application) async throws {
     )
 }
 ```
-
-### Register Migrations
-
-If you're using the default schemas provided by this framework, you can register the default models in your `configure(_:)` method:
-
-```swift
-OrdersService<OrderData>.register(migrations: app.migrations)
-```
-
-> Important: Register the default models before the migration of your order data model.
 
 ### Generate the Order Content
 

@@ -26,7 +26,7 @@ final class OrderData: OrderDataModel, @unchecked Sendable {
     }
 }
 
-struct CreateOrderData: AsyncMigration {
+extension OrderData: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(OrderData.FieldKeys.schemaName)
             .id()

@@ -99,17 +99,6 @@ public final class PassesService<PD: PassDataModel>: Sendable where PD.PassType 
         try await service.generatePassesContent(for: passes, on: db)
     }
 
-    /// Adds the migrations for PassKit passes models.
-    ///
-    /// - Parameter migrations: The `Migrations` object to add the migrations to.
-    public static func register(migrations: Migrations) {
-        migrations.add(UserPersonalization())
-        migrations.add(Pass())
-        migrations.add(PassesDevice())
-        migrations.add(PassesRegistration())
-        migrations.add(PassesErrorLog())
-    }
-
     /// Sends push notifications for a given pass.
     ///
     /// - Parameters:

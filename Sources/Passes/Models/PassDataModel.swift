@@ -29,7 +29,7 @@
 import FluentKit
 
 /// Represents the `Model` that stores custom app data associated to PassKit passes.
-public protocol PassDataModel: Model {
+public protocol PassDataModel: Model, AsyncMigration {
     associatedtype PassType: PassModel
 
     /// The pass type identifier that’s registered with Apple.

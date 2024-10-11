@@ -29,7 +29,7 @@
 import FluentKit
 
 /// Represents the `Model` that stores PassKit devices.
-public protocol DeviceModel: Model where IDValue == Int {
+public protocol DeviceModel: Model, AsyncMigration where IDValue == Int {
     /// The push token used for sending updates to the device.
     var pushToken: String { get set }
 

@@ -15,8 +15,6 @@ func withApp(
     try #require(isLoggingConfigured)
 
     app.databases.use(.sqlite(.memory), as: .sqlite)
-    PassesService<PassData>.register(migrations: app.migrations)
-    app.migrations.add(CreatePassData())
     let passesService = try PassesService<PassData>(
         app: app,
         delegate: delegate,

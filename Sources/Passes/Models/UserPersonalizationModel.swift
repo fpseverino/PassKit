@@ -8,7 +8,7 @@
 import FluentKit
 
 /// Represents the `Model` that stores user personalization info.
-public protocol UserPersonalizationModel: Model where IDValue == Int {
+public protocol UserPersonalizationModel: Model, AsyncMigration where IDValue == Int {
     /// The user’s full name, as entered by the user.
     var fullName: String? { get set }
 
