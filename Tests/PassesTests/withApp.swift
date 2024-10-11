@@ -1,9 +1,9 @@
 import FluentKit
 import FluentSQLiteDriver
-import WalletKit
 import Passes
 import Testing
 import Vapor
+import WalletKit
 import Zip
 
 func withApp(

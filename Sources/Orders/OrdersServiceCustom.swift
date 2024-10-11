@@ -9,9 +9,9 @@ import APNS
 import APNSCore
 import Fluent
 import NIOSSL
-import WalletKit
 import Vapor
 import VaporAPNS
+import WalletKit
 @_spi(CMS) import X509
 import Zip
 
