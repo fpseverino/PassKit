@@ -21,7 +21,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "PassKit",
+            name: "WalletKit",
             dependencies: [
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "Vapor", package: "vapor"),
@@ -34,14 +34,14 @@ let package = Package(
         .target(
             name: "Passes",
             dependencies: [
-                .target(name: "PassKit")
+                .target(name: "WalletKit")
             ],
             swiftSettings: swiftSettings
         ),
         .target(
             name: "Orders",
             dependencies: [
-                .target(name: "PassKit")
+                .target(name: "WalletKit")
             ],
             swiftSettings: swiftSettings
         ),
@@ -49,7 +49,7 @@ let package = Package(
             name: "PassesTests",
             dependencies: [
                 .target(name: "Passes"),
-                .target(name: "PassKit"),
+                .target(name: "WalletKit"),
                 .product(name: "XCTVapor", package: "vapor"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
             ],
@@ -62,7 +62,7 @@ let package = Package(
             name: "OrdersTests",
             dependencies: [
                 .target(name: "Orders"),
-                .target(name: "PassKit"),
+                .target(name: "WalletKit"),
                 .product(name: "XCTVapor", package: "vapor"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
             ],

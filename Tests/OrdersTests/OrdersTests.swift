@@ -1,4 +1,4 @@
-import PassKit
+import WalletKit
 import Testing
 import XCTVapor
 import Zip

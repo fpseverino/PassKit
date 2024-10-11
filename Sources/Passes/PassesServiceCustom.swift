@@ -9,7 +9,7 @@ import APNS
 import APNSCore
 import Fluent
 import NIOSSL
-import PassKit
+import WalletKit
 import Vapor
 import VaporAPNS
 @_spi(CMS) import X509

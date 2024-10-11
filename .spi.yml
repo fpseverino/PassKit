@@ -1,5 +1,5 @@
 version: 1
 builder:
   configs:
-    - documentation_targets: [PassKit, Passes, Orders]
+    - documentation_targets: [WalletKit, Passes, Orders]
       swift_version: 6.0

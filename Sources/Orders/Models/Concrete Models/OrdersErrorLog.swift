@@ -6,7 +6,7 @@
 //
 
 import FluentKit
-import PassKit
+import WalletKit
 
 import struct Foundation.Date
 

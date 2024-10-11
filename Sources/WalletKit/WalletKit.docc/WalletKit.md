@@ -1,4 +1,4 @@
-# ``PassKit``
+# ``WalletKit``
 
 Create, distribute, and update passes and orders for the Apple Wallet app with Vapor.
 

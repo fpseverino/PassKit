@@ -27,7 +27,7 @@
 /// THE SOFTWARE.
 
 import FluentKit
-import PassKit
+import WalletKit
 
 /// Represents the `Model` that stores passes registrations.
 public protocol PassesRegistrationModel: Model where IDValue == Int {

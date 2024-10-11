@@ -6,7 +6,7 @@
 //
 
 import FluentKit
-import PassKit
+import WalletKit
 
 /// The `Model` that stores PassKit passes devices.
 final public class PassesDevice: DeviceModel, @unchecked Sendable {

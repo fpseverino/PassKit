@@ -21,7 +21,7 @@ A personalizable pass is just a standard pass package with the following additio
 
 You'll have to make a few changes to ``PassesDelegate`` to support personalizable passes and create the additional files.
 
-Implement the ``PassesDelegate/encodePersonalization(for:db:encoder:)`` method, which gives you the ``Pass`` to encode.
+Implement the ``PassesDelegate/encodePersonalization(for:db:)`` method, which gives you the ``Pass`` to encode.
 If the pass requires personalization, and if it was not already personalized, create a ``PersonalizationJSON`` and return it, otherwise return `nil`.
 
 In the ``PassesDelegate/template(for:db:)`` method, you have to return two different directory paths, depending on whether the pass has to be personalized or not. If it does, the directory must contain the `personalizationLogo@XX.png` file.
@@ -103,10 +103,10 @@ Wallet will then send the user personal information to your server, which will b
 Immediately after that, Wallet will request the updated pass.
 This updated pass will contain the user personalization data that was previously saved inside the ``Pass/userPersonalization`` field.
 
-> Important: This updated and personalized pass **must not** contain the `personalization.json` file, so make sure that the ``PassesDelegate/encodePersonalization(for:db:encoder:)`` method returns `nil` when the pass has already been personalized.
+> Important: This updated and personalized pass **must not** contain the `personalization.json` file, so make sure that the ``PassesDelegate/encodePersonalization(for:db:)`` method returns `nil` when the pass has already been personalized.
 
 ## Topics
 
 ### Delegate Method
 
-- ``PassesDelegate/encodePersonalization(for:db:encoder:)``
+- ``PassesDelegate/encodePersonalization(for:db:)``

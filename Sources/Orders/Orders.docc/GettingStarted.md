@@ -191,7 +191,7 @@ If you don't like the schema names provided by default, you can create your own 
 ```swift
 import Fluent
 import Vapor
-import PassKit
+import WalletKit
 import Orders
 
 let orderDelegate = OrderDelegate()
